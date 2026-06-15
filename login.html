@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Branch Review — Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:Arial,sans-serif;
+      background:linear-gradient(135deg,#1a1a2e 0%,#2f3e75 60%,#3d52a0 100%);
+      min-height:100vh;
+      display:flex;align-items:center;justify-content:center;
+      padding:20px;
+    }
+    .box{
+      background:#fff;
+      border-radius:16px;
+      width:100%;max-width:380px;
+      box-shadow:0 16px 48px rgba(0,0,0,0.3);
+      overflow:hidden;
+    }
+    .box-head{
+      background:linear-gradient(90deg,#2f3e75,#3d52a0);
+      padding:28px 28px 22px;
+      text-align:center;
+    }
+    .box-head h1{font-size:20px;color:#fff;font-weight:700;letter-spacing:.02em}
+    .box-head p{font-size:12px;color:#c7d0e8;margin-top:5px}
+    .box-body{padding:28px}
+
+    .field{margin-bottom:16px}
+    .field label{display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+    .field input{
+      width:100%;padding:10px 12px;
+      border:1.5px solid #c7d0e8;border-radius:8px;
+      font-size:13px;color:#1a1a2e;
+      outline:none;transition:border-color .2s;
+    }
+    .field input:focus{border-color:#2f3e75}
+
+    .hint{font-size:11px;color:#9ca3af;margin-top:4px}
+
+    .btn{
+      width:100%;padding:11px;
+      background:linear-gradient(90deg,#2f3e75,#3d52a0);
+      color:#fff;border:none;border-radius:8px;
+      font-size:13px;font-weight:700;cursor:pointer;
+      letter-spacing:.03em;margin-top:4px;
+      transition:opacity .2s;
+    }
+    .btn:hover{opacity:.9}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+
+    .err{
+      background:#fee2e2;border:1px solid #fca5a5;
+      color:#991b1b;border-radius:8px;
+      padding:9px 12px;font-size:12px;
+      margin-bottom:14px;display:none;
+    }
+    .err.show{display:block}
+
+    .footer{text-align:center;font-size:11px;color:#9ca3af;padding:0 28px 20px}
+    .role-tabs{display:flex;gap:6px;margin-bottom:18px}
+    .rtab{
+      flex:1;padding:8px;text-align:center;
+      border-radius:8px;border:1.5px solid #c7d0e8;
+      font-size:11px;font-weight:700;cursor:pointer;color:#6b7280;
+      transition:all .15s;
+    }
+    .rtab.on{background:#2f3e75;color:#fff;border-color:#2f3e75}
+    .rtab:hover:not(.on){background:#eef2ff;border-color:#3d52a0}
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <div class="box-head">
+    <h1>📊 Branch Review</h1>
+    <p>Performance Dashboard</p>
+  </div>
+  <div class="box-body">
+
+    <div class="role-tabs">
+      <div class="rtab on"  onclick="setTab('admin',this)">Admin</div>
+      <div class="rtab"     onclick="setTab('branch',this)">Branch</div>
+      <div class="rtab"     onclick="setTab('staff',this)">Staff</div>
+    </div>
+
+    <div class="err" id="err"></div>
+
+    <div class="field">
+      <label id="userLabel">Username</label>
+      <input type="text" id="username" placeholder="Enter username" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter password">
+      <div class="hint" id="hint"></div>
+    </div>
+
+    <button class="btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+  </div>
+  <div class="footer">Secure internal dashboard · Access restricted</div>
+</div>
+
+<script>
+const AUTH_URL = "https://script.google.com/macros/s/AKfycbzTPB10fdiNYo2mRF_pIsUuPfOhFW02_omSZYCPhPq_ybtVYqz5HWrbB7ia7C4lb5j7-g/exec";
+
+let currentTab = "admin";
+
+function setTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll(".rtab").forEach(t => t.classList.remove("on"));
+  el.classList.add("on");
+  document.getElementById("err").classList.remove("show");
+
+  const userLabel = document.getElementById("userLabel");
+  const hint      = document.getElementById("hint");
+  const userInput = document.getElementById("username");
+  const passInput = document.getElementById("password");
+
+  if (tab === "admin") {
+    userLabel.textContent = "Username";
+    hint.textContent = "";
+    userInput.placeholder = "Admin username";
+    passInput.placeholder = "Password";
+  } else if (tab === "branch") {
+    userLabel.textContent = "Branch Name";
+    hint.textContent = "Enter your branch name exactly as registered";
+    userInput.placeholder = "e.g. Kothamangalam";
+    passInput.placeholder = "Branch password";
+  } else {
+    userLabel.textContent = "Employee ID";
+    hint.textContent = "Your Employee ID is both your username and password";
+    userInput.placeholder = "Enter Employee ID";
+    passInput.placeholder = "Enter Employee ID again";
+  }
+}
+
+async function doLogin() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const btn      = document.getElementById("loginBtn");
+  const err      = document.getElementById("err");
+
+  err.classList.remove("show");
+
+  if (!username || !password) {
+    showErr("Please enter both fields.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Signing in...";
+
+  try {
+    const url = AUTH_URL
+      + "?action=login"
+      + "&username=" + encodeURIComponent(username)
+      + "&password=" + encodeURIComponent(password);
+
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.ok) {
+      localStorage.setItem("brToken",     data.token);
+      localStorage.setItem("brRole",      data.role);
+      localStorage.setItem("brBranch",    data.branch);
+      localStorage.setItem("brName",      data.name);
+      localStorage.setItem("brEmpId",     data.empId || "");
+      localStorage.setItem("brLoginDate", todayStr());
+      window.location.href = "index.html";
+    } else {
+      showErr(data.error || "Login failed.");
+    }
+  } catch(e) {
+    showErr("Network error. Please try again.");
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Sign In";
+}
+
+function showErr(msg) {
+  const err = document.getElementById("err");
+  err.textContent = msg;
+  err.classList.add("show");
+}
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,"0") + "-" +
+    String(d.getDate()).padStart(2,"0");
+}
+
+// If already logged in today, redirect immediately
+(function checkSession() {
+  const token     = localStorage.getItem("brToken");
+  const loginDate = localStorage.getItem("brLoginDate");
+  if (token && loginDate === todayStr()) {
+    window.location.href = "index.html";
+  }
+})();
+
+// Allow Enter key to submit
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter") doLogin();
+});
+</script>
+</body>
+</html>

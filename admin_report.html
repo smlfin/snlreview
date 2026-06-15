@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Report — Branch Review</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;background:#e8ecf4;color:#1a1a2e;min-height:100vh}
+
+    .topbar{background:#2f3e75;padding:12px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,0.18)}
+    .topbar h1{font-size:15px;font-weight:700;color:#fff;flex:1}
+    .nav-link{font-size:12px;text-decoration:none;padding:6px 14px;border-radius:7px;background:#fff;color:#2f3e75;font-weight:700}
+    .nav-link:hover{background:#dbeafe}
+    .logout{font-size:12px;padding:6px 14px;border-radius:7px;background:rgba(255,255,255,0.15);color:#fff;border:none;cursor:pointer;font-weight:600}
+    .logout:hover{background:rgba(255,255,255,0.25)}
+
+    .main{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+
+    .date-bar{
+      background:linear-gradient(90deg,#2f3e75,#3d52a0);
+      border-radius:12px;padding:14px 18px;
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+      color:#fff;
+    }
+    .date-bar h2{font-size:14px;font-weight:700}
+    .date-bar span{font-size:12px;color:#c7d0e8}
+    .refresh-btn{font-size:11px;padding:5px 12px;border-radius:6px;background:rgba(255,255,255,0.2);color:#fff;border:none;cursor:pointer;font-weight:600}
+    .refresh-btn:hover{background:rgba(255,255,255,0.3)}
+
+    /* Tab bar */
+    .tab-bar{display:flex;gap:8px;flex-wrap:wrap}
+    .tab-btn{
+      font-size:12px;padding:8px 18px;border-radius:8px;border:2px solid #c7d0e8;
+      background:#fff;color:#2f3e75;font-weight:700;cursor:pointer;transition:all .15s
+    }
+    .tab-btn.active{background:#2f3e75;color:#fff;border-color:#2f3e75}
+    .tab-btn:hover:not(.active){background:#eef2ff;border-color:#2f3e75}
+
+    .summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+    .sc{background:#fff;border:2px solid #c7d0e8;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(47,62,117,0.07)}
+    .sc .sl{font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+    .sc .sv{font-size:24px;font-weight:700}
+    .sc .ss{font-size:11px;color:#9ca3af;margin-top:2px}
+
+    .branch-card{background:#fff;border:2px solid #c7d0e8;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(47,62,117,0.07)}
+    .bc-head{
+      padding:11px 16px;
+      background:linear-gradient(90deg,#2f3e75,#3d52a0);
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;
+    }
+    .bc-head h3{font-size:13px;font-weight:700;color:#fff}
+    .bc-head .meta{font-size:11px;color:#c7d0e8}
+
+    .bc-stats{display:flex;gap:0;border-bottom:2px solid #e2e8f4;background:#f4f6fc}
+    .bc-stat{flex:1;padding:10px 14px;border-right:1.5px solid #e2e8f4;text-align:center}
+    .bc-stat:last-child{border-right:none}
+    .bc-stat .bsl{font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:.04em}
+    .bc-stat .bsv{font-size:18px;font-weight:700;margin-top:2px}
+
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    thead{background:#2f3e75}
+    th{background:#2f3e75;color:#fff;padding:8px 12px;text-align:left;font-weight:700;font-size:11px;border-right:1px solid rgba(255,255,255,0.15);letter-spacing:.03em}
+    th:last-child{border-right:none}
+    td{padding:8px 12px;border-bottom:1.5px solid #e2e8f4;border-right:1px solid #edf0f7;vertical-align:middle;background:#fff}
+    td:last-child{border-right:none}
+    tr:last-child td{border-bottom:none}
+    tr:nth-child(even) td{background:#f8faff}
+    tr:hover td{background:#eef2ff!important}
+
+    .badge{font-size:10px;padding:3px 8px;border-radius:6px;font-weight:700;white-space:nowrap}
+    .bg{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+    .bn{background:#dcfce7;color:#166534;border:1px solid #86efac}
+    .ba{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+    .bb{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+
+    .progress-bar-wrap{background:#e2e8f4;border-radius:99px;height:7px;margin-top:4px;overflow:hidden}
+    .progress-bar-fill{height:100%;border-radius:99px;transition:width .4s}
+
+    .spinner{padding:60px;text-align:center;color:#6b7280;font-size:14px}
+    .empty{padding:30px;text-align:center;color:#9ca3af;font-size:13px}
+
+    /* Range info pill */
+    .range-pill{
+      display:inline-block;font-size:11px;padding:4px 12px;border-radius:20px;
+      background:rgba(255,255,255,0.2);color:#fff;font-weight:600;margin-top:4px
+    }
+
+    @media(max-width:600px){
+      .main{padding:10px 12px}
+      .summary-row{grid-template-columns:1fr 1fr}
+      .bc-stats{flex-wrap:wrap}
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📋 Admin Report — Branch Review</h1>
+  <a href="index.html" class="nav-link">← Dashboard</a>
+  <button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<div class="main" id="mainArea">
+  <div class="spinner">⏳ Loading report...</div>
+</div>
+
+<script>
+const LOGIN_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPuLZy5EEg4acZqfVl5varn3gm9BsX72-PcQiLOkecuIF03o6etD3UKknOLCYdocV72iyxWX6B2Srm/pub?gid=61545749&single=true&output=csv";
+const LOG_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPuLZy5EEg4acZqfVl5varn3gm9BsX72-PcQiLOkecuIF03o6etD3UKknOLCYdocV72iyxWX6B2Srm/pub?gid=325077854&single=true&output=csv";
+
+// ── DATE HELPERS ──────────────────────────────────────────────────────────────
+
+function toYMD(d) {
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+function todayStr()    { return toYMD(new Date()); }
+function yesterdayStr(){ const d=new Date(); d.setDate(d.getDate()-1); return toYMD(d); }
+
+function todayDisplay() {
+  return new Date().toLocaleDateString("en-IN",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+}
+
+/*
+  Monthly range logic:
+  - This month (May 2026): start = 2026-05-11
+  - All future months    : start = 1st of that month
+  End = yesterday (we track up to yesterday so the day is "complete")
+  Sundays are excluded from the working day count.
+*/
+function getMonthRange() {
+  const today = new Date();
+  const yr  = today.getFullYear();
+  const mon = today.getMonth(); // 0-indexed
+
+  // May 2026 is month index 4, year 2026
+  const isMay2026 = (yr === 2026 && mon === 4);
+  const startDay  = isMay2026 ? 11 : 1;
+  const startDate = new Date(yr, mon, startDay);
+
+  // End = yesterday
+  const endDate = new Date(today);
+  endDate.setDate(today.getDate() - 1);
+
+  // If yesterday is before startDate (e.g. viewing on the very start day),
+  // use today as the end so at least today's data shows.
+  if (endDate < startDate) {
+    endDate.setTime(today.getTime());
+  }
+
+  return { startDate, endDate };
+}
+
+/* Count working days (Mon–Sat) between two Date objects, inclusive */
+function countWorkingDays(startDate, endDate) {
+  let count = 0;
+  const cur = new Date(startDate);
+  while (cur <= endDate) {
+    if (cur.getDay() !== 0) count++; // 0 = Sunday
+    cur.setDate(cur.getDate() + 1);
+  }
+  return count;
+}
+
+/* Build a Set of all YYYY-MM-DD working day strings in the range */
+function buildWorkingDaySet(startDate, endDate) {
+  const set = new Set();
+  const cur = new Date(startDate);
+  while (cur <= endDate) {
+    if (cur.getDay() !== 0) set.add(toYMD(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return set;
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
+}
+
+function parseCSV(text) {
+  return text.split("\n").map(row => row.split(",").map(cell => cell.replace(/"/g,"").trim()));
+}
+
+// ── GLOBALS ───────────────────────────────────────────────────────────────────
+let currentView = "today";   // "today" | "monthly"
+let cachedLoginRows = null;
+let cachedLogRows   = null;
+let currentMissingStaff = [];
+
+// ── FETCH (once, cache) ────────────────────────────────────────────────────────
+async function fetchSheets() {
+  if (cachedLoginRows && cachedLogRows) return;
+  const [loginRes, logRes] = await Promise.all([fetch(LOGIN_CSV), fetch(LOG_CSV)]);
+  cachedLoginRows = parseCSV(await loginRes.text());
+  cachedLogRows   = parseCSV(await logRes.text());
+}
+
+// ── MAIN LOAD ─────────────────────────────────────────────────────────────────
+async function loadReport(view) {
+  currentView = view || currentView;
+  const main = document.getElementById("mainArea");
+  main.innerHTML = `<div class="spinner">⏳ Fetching data...</div>`;
+
+  try {
+    await fetchSheets();
+
+    if (currentView === "today") {
+      buildTodayReport();
+    } else {
+      buildMonthlyReport();
+    }
+  } catch(e) {
+    main.innerHTML = `<div class="empty">❌ Error: ${e.message}</div>`;
+  }
+}
+
+// ── TODAY REPORT ──────────────────────────────────────────────────────────────
+function buildTodayReport() {
+  const todayDate = todayStr();
+  const viewedIds   = new Set();
+  const reviewedIds = new Set();
+
+  cachedLogRows.forEach((row, i) => {
+    if (i === 0 || !row[0]) return;
+    const rowDate = row[0].substring(0,10);
+    if (rowDate === todayDate) {
+      const empId = row[5], type = row[4];
+      if (empId) {
+        viewedIds.add(empId);
+        if (type === "reviewed") reviewedIds.add(empId);
+      }
+    }
+  });
+
+  const branchMap = buildBranchMap((empId) => ({
+    loggedIn: viewedIds.has(empId),
+    reviewed: reviewedIds.has(empId)
+  }));
+
+  renderTodayReport(branchMap);
+}
+
+// ── MONTHLY REPORT ────────────────────────────────────────────────────────────
+function buildMonthlyReport() {
+  const { startDate, endDate } = getMonthRange();
+  const workingDaySet   = buildWorkingDaySet(startDate, endDate);
+  const totalWorkingDays = workingDaySet.size;
+
+  // empId → Set of dates viewed
+  const empDateMap = {};
+
+  cachedLogRows.forEach((row, i) => {
+    if (i === 0 || !row[0]) return;
+    const rowDate = row[0].substring(0,10);
+    if (!workingDaySet.has(rowDate)) return;
+    const empId = row[5];
+    if (!empId) return;
+    if (!empDateMap[empId]) empDateMap[empId] = new Set();
+    empDateMap[empId].add(rowDate);
+  });
+
+  const branchMap = buildBranchMap((empId) => {
+    const daysViewed = empDateMap[empId] ? empDateMap[empId].size : 0;
+    return {
+      daysViewed,
+      totalWorkingDays,
+      daysMissed: totalWorkingDays - daysViewed,
+      pct: totalWorkingDays > 0 ? Math.round((daysViewed / totalWorkingDays) * 100) : 0
+    };
+  });
+
+  renderMonthlyReport(branchMap, { startDate, endDate, totalWorkingDays });
+}
+
+// ── SHARED: BUILD BRANCH MAP ──────────────────────────────────────────────────
+function buildBranchMap(staffDataFn) {
+  const branchMap = {};
+  cachedLoginRows.forEach((row, i) => {
+    if (i === 0 || !row[0]) return;
+    const empId = row[0], name = row[1], branch = row[2];
+    if (!branch) return;
+    const staffData = staffDataFn(empId);
+    const staffObj  = { empId, fullName: name, ...staffData };
+
+    if (!branchMap[branch]) branchMap[branch] = { branch, staff: [] };
+    branchMap[branch].staff.push(staffObj);
+  });
+  return branchMap;
+}
+
+// ── RENDER: TODAY ─────────────────────────────────────────────────────────────
+function renderTodayReport(branchMap) {
+  const report      = Object.values(branchMap);
+  const totalStaff  = report.reduce((s,b) => s + b.staff.length, 0);
+  const totalViewed = report.reduce((s,b) => s + b.staff.filter(x=>x.loggedIn).length, 0);
+  const totalReview = report.reduce((s,b) => s + b.staff.filter(x=>x.reviewed).length, 0);
+  const totalMiss   = totalStaff - totalViewed;
+
+  currentMissingStaff = [];
+  report.forEach(b => b.staff.forEach(s => {
+    if (!s.loggedIn) currentMissingStaff.push({Branch:b.branch, Name:s.fullName, EmpID:s.empId});
+  }));
+
+  let html = buildTabBar("today") + `
+    <div class="date-bar">
+      <div>
+        <h2>📅 Today — ${todayDisplay()}</h2>
+        <span>Live snapshot — data up to now</span>
+      </div>
+      <button class="refresh-btn" onclick="cachedLoginRows=null;cachedLogRows=null;loadReport('today')">↻ Sync</button>
+    </div>
+    <div class="summary-row">
+      <div class="sc"><div class="sl">Total Staff</div><div class="sv">${totalStaff}</div></div>
+      <div class="sc"><div class="sl">Viewed Today</div><div class="sv" style="color:#166534">${totalViewed}</div></div>
+      <div class="sc" onclick="showMissingDrillDown()" style="cursor:pointer;border-color:#991b1b;background:#fff5f5">
+        <div class="sl" style="color:#991b1b">Missing (Tap)</div>
+        <div class="sv" style="color:#991b1b">${totalMiss}</div>
+        <div class="ss">Click to expand & download</div>
+      </div>
+      <div class="sc"><div class="sl">Reviewed</div><div class="sv" style="color:#2f3e75">${totalReview}</div></div>
+    </div>
+    <div id="drillDownArea"></div>`;
+
+  report.forEach(b => {
+    const viewed = b.staff.filter(x=>x.loggedIn).length;
+    let rows = "";
+    b.staff.forEach((s,i) => {
+      const lb = s.loggedIn ? `<span class="badge bn">Viewed</span>` : `<span class="badge bg">MISSING</span>`;
+      const rb = s.reviewed ? `<span class="badge bn">✓ Done</span>` : `<span class="badge ba">Pending</span>`;
+      rows += `<tr><td>${i+1}</td><td>${s.fullName}</td><td>${s.empId}</td><td>${lb}</td><td>${rb}</td></tr>`;
+    });
+    html += `
+      <div class="branch-card">
+        <div class="bc-head">
+          <h3>🏢 ${b.branch}</h3>
+          <span class="meta">${viewed}/${b.staff.length} viewed</span>
+        </div>
+        <table>
+          <thead><tr><th>#</th><th>Name</th><th>ID</th><th>Status</th><th>Review</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  });
+
+  document.getElementById("mainArea").innerHTML = html;
+}
+
+// ── RENDER: MONTHLY ───────────────────────────────────────────────────────────
+function renderMonthlyReport(branchMap, { startDate, endDate, totalWorkingDays }) {
+  const report = Object.values(branchMap);
+
+  // Staff with 0 days viewed across full month
+  currentMissingStaff = [];
+  report.forEach(b => b.staff.forEach(s => {
+    if (s.daysViewed === 0) currentMissingStaff.push({Branch:b.branch, Name:s.fullName, EmpID:s.empId, DaysViewed:0, DaysMissed:s.totalWorkingDays});
+  }));
+
+  const totalStaff     = report.reduce((s,b) => s + b.staff.length, 0);
+  const totalDaysViewed= report.reduce((s,b) => s + b.staff.reduce((x,st) => x + st.daysViewed, 0), 0);
+  const perfectStaff   = report.reduce((s,b) => s + b.staff.filter(x=>x.pct===100).length, 0);
+  const zeroStaff      = currentMissingStaff.length;
+
+  let html = buildTabBar("monthly") + `
+    <div class="date-bar">
+      <div>
+        <h2>📆 Monthly Range — View Tracker</h2>
+        <span class="range-pill">📅 ${formatDate(startDate)} → ${formatDate(endDate)} &nbsp;|&nbsp; ${totalWorkingDays} Working Days (excl. Sundays)</span>
+      </div>
+      <button class="refresh-btn" onclick="cachedLoginRows=null;cachedLogRows=null;loadReport('monthly')">↻ Sync</button>
+    </div>
+    <div class="summary-row">
+      <div class="sc"><div class="sl">Total Staff</div><div class="sv">${totalStaff}</div></div>
+      <div class="sc"><div class="sl">Working Days</div><div class="sv" style="color:#2f3e75">${totalWorkingDays}</div></div>
+      <div class="sc"><div class="sl">100% Viewed</div><div class="sv" style="color:#166534">${perfectStaff}</div></div>
+      <div class="sc" onclick="showMissingDrillDown()" style="cursor:pointer;border-color:#991b1b;background:#fff5f5">
+        <div class="sl" style="color:#991b1b">Zero Views (Tap)</div>
+        <div class="sv" style="color:#991b1b">${zeroStaff}</div>
+        <div class="ss">Never viewed this month</div>
+      </div>
+    </div>
+    <div id="drillDownArea"></div>`;
+
+  report.forEach(b => {
+    const avgPct = b.staff.length ? Math.round(b.staff.reduce((s,x)=>s+x.pct,0)/b.staff.length) : 0;
+    let rows = "";
+    b.staff.forEach((s,i) => {
+      const pctColor = s.pct >= 80 ? "#166534" : s.pct >= 50 ? "#92400e" : "#991b1b";
+      const barColor = s.pct >= 80 ? "#22c55e" : s.pct >= 50 ? "#f59e0b" : "#ef4444";
+      const missedBadge = s.daysMissed === 0
+        ? `<span class="badge bn">✓ Perfect</span>`
+        : `<span class="badge bg">${s.daysMissed} day${s.daysMissed>1?"s":""} missed</span>`;
+      rows += `
+        <tr>
+          <td>${i+1}</td>
+          <td>${s.fullName}</td>
+          <td>${s.empId}</td>
+          <td style="font-weight:700;color:${pctColor}">
+            ${s.daysViewed}/${s.totalWorkingDays}
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${s.pct}%;background:${barColor}"></div></div>
+          </td>
+          <td style="font-weight:700;color:${pctColor}">${s.pct}%</td>
+          <td>${missedBadge}</td>
+        </tr>`;
+    });
+
+    html += `
+      <div class="branch-card">
+        <div class="bc-head">
+          <h3>🏢 ${b.branch}</h3>
+          <span class="meta">Branch avg: ${avgPct}% viewed</span>
+        </div>
+        <table>
+          <thead><tr><th>#</th><th>Name</th><th>ID</th><th>Days Viewed / Working</th><th>%</th><th>Status</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  });
+
+  document.getElementById("mainArea").innerHTML = html;
+}
+
+// ── TAB BAR ───────────────────────────────────────────────────────────────────
+function buildTabBar(active) {
+  return `
+    <div class="tab-bar">
+      <button class="tab-btn ${active==='today'?'active':''}" onclick="loadReport('today')">📋 Today's View</button>
+      <button class="tab-btn ${active==='monthly'?'active':''}" onclick="loadReport('monthly')">📆 Monthly Range</button>
+    </div>`;
+}
+
+// ── DRILL DOWN & DOWNLOAD ─────────────────────────────────────────────────────
+function showMissingDrillDown() {
+  if (currentMissingStaff.length === 0) { alert("No missing staff!"); return; }
+
+  const isMonthly = currentView === "monthly";
+  const cols = isMonthly
+    ? `<tr><th>Branch</th><th>Name</th><th>Employee ID</th><th>Days Viewed</th><th>Days Missed</th></tr>`
+    : `<tr><th>Branch</th><th>Name</th><th>Employee ID</th></tr>`;
+
+  const rowsHtml = currentMissingStaff.map(s => isMonthly
+    ? `<tr><td>${s.Branch}</td><td>${s.Name}</td><td>${s.EmpID}</td><td>${s.DaysViewed}</td><td>${s.DaysMissed}</td></tr>`
+    : `<tr><td>${s.Branch}</td><td>${s.Name}</td><td>${s.EmpID}</td></tr>`
+  ).join('');
+
+  const title = isMonthly ? "🚨 Staff With Zero Views This Month" : "🚨 Missing Staff — Today";
+
+  document.getElementById("drillDownArea").innerHTML = `
+    <div class="branch-card" style="border:2px solid #991b1b">
+      <div class="bc-head" style="background:#991b1b">
+        <h3>${title}</h3>
+        <button class="refresh-btn" onclick="downloadMissingCSV()">📥 Download CSV</button>
+      </div>
+      <table><thead>${cols}</thead><tbody>${rowsHtml}</tbody></table>
+    </div>`;
+
+  window.scrollTo({ top: 0, behavior:'smooth' });
+}
+
+function downloadMissingCSV() {
+  const isMonthly = currentView === "monthly";
+  let csv = isMonthly ? "Branch,Name,EmpID,DaysViewed,DaysMissed\n" : "Branch,Name,EmpID\n";
+  currentMissingStaff.forEach(s => {
+    csv += isMonthly
+      ? `"${s.Branch}","${s.Name}","${s.EmpID}",${s.DaysViewed},${s.DaysMissed}\n`
+      : `"${s.Branch}","${s.Name}","${s.EmpID}"\n`;
+  });
+  const link = document.createElement("a");
+  link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
+  link.download = `Missing_Staff_${currentView}_${todayStr()}.csv`;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+function logout() { localStorage.clear(); window.location.href = "login.html"; }
+
+loadReport("today");
+</script>
+</body>
+</html>

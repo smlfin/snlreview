@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Branch Review Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;background:#e8ecf4;color:#1a1a2e;min-height:100vh}
+
+    /* ── TOPBAR ── */
+    .topbar{background:#2f3e75;padding:12px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,0.18)}
+    .topbar h1{font-size:16px;font-weight:700;flex:1;min-width:150px;color:#fff;letter-spacing:.02em}
+    select{font-size:12px;padding:6px 10px;border:1px solid #c7d0e8;border-radius:7px;background:#fff;color:#1a1a2e;cursor:pointer}
+    button{font-size:12px;padding:6px 14px;border:none;border-radius:7px;background:#fff;color:#2f3e75;cursor:pointer;font-weight:600}
+    button:hover{background:#dbeafe;color:#1d4ed8}
+
+    /* ── LAYOUT ── */
+    .main{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+
+    /* ── OUTER CARDS (snapshot, tab container, month picker) ── */
+    .card{
+      background:#fff;
+      border:2px solid #c7d0e8;
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow:0 2px 10px rgba(47,62,117,0.08);
+    }
+    .card-head{
+      padding:11px 16px;
+      border-bottom:2px solid #c7d0e8;
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;
+      background:linear-gradient(90deg,#2f3e75 0%,#3d52a0 100%);
+    }
+    .card-head h2{font-size:13px;font-weight:700;color:#fff;letter-spacing:.02em}
+    .card-head span{color:#c7d0e8!important}
+
+    /* ── MONTH CHIPS ── */
+    .months-row{display:flex;flex-wrap:wrap;gap:5px;padding:10px 15px;border-bottom:2px solid #c7d0e8;align-items:center;background:#f4f6fc}
+    .chip{display:inline-block;padding:3px 11px;border-radius:7px;background:#fff;border:1.5px solid #c7d0e8;font-size:11px;cursor:pointer;color:#555;font-weight:500;transition:all .15s}
+    .chip.on{background:#2f3e75;color:#fff;border-color:#2f3e75;font-weight:700}
+    .chip:hover:not(.on){background:#e8ecf4;border-color:#3d52a0}
+
+    /* ── KPI METRIC CARDS ── */
+    .metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;padding:14px 16px;background:#f4f6fc;border-bottom:2px solid #c7d0e8}
+    .mc{
+      background:#fff;
+      border-radius:10px;
+      padding:12px 14px;
+      border:1.5px solid #c7d0e8;
+      box-shadow:0 1px 4px rgba(47,62,117,0.07);
+    }
+    .mc .ml{font-size:10px;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+    .mc .mv{font-size:22px;font-weight:700;line-height:1.1}
+    .mc .ms{font-size:10px;color:#9ca3af;margin-top:3px}
+
+    /* ── TABLES (snapshot product table + trend table) ── */
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    thead{background:#2f3e75}
+    th{
+      background:#2f3e75;color:#fff;
+      padding:9px 12px;text-align:left;
+      font-weight:700;font-size:11px;
+      border-right:1px solid rgba(255,255,255,0.15);
+      letter-spacing:.03em;
+    }
+    th:last-child{border-right:none}
+    td{
+      padding:9px 12px;
+      border-bottom:1.5px solid #e2e8f4;
+      border-right:1px solid #edf0f7;
+      vertical-align:middle;
+      background:#fff;
+    }
+    td:last-child{border-right:none}
+    tr:last-child td{border-bottom:none}
+    tr:nth-child(even) td{background:#f8faff}
+    tr:hover td{background:#eef2ff!important}
+
+    /* ── STAFF CARD TABLE — tighter padding ── */
+    .sc table td{padding:7px 8px}
+    .sc table th{padding:7px 8px}
+
+    /* ── PROGRESS BAR ── */
+    .bar-wrap{display:flex;align-items:center;gap:7px}
+    .bar-bg{flex:1;height:7px;border-radius:4px;background:#e2e8f4;overflow:hidden;min-width:50px;border:1px solid #d1d9ef}
+    .bar-fill{height:100%;border-radius:4px;transition:width .4s}
+
+    /* ── BADGES ── */
+    .badge{font-size:10px;padding:3px 8px;border-radius:6px;font-weight:700;white-space:nowrap;letter-spacing:.02em}
+    .bg{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+    .ba{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+    .bn{background:#dcfce7;color:#166534;border:1px solid #86efac}
+    .bb{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+
+    /* ── TABS ── */
+    .tab-row{display:flex;border-bottom:2px solid #c7d0e8;overflow-x:auto;background:#f4f6fc}
+    .tab{padding:11px 18px;font-size:12px;cursor:pointer;border-bottom:3px solid transparent;color:#6b7280;white-space:nowrap;flex-shrink:0;font-weight:600;transition:all .15s}
+    .tab.on{border-bottom-color:#2f3e75;color:#2f3e75;background:#fff}
+    .tab:hover:not(.on){background:#eef2ff;color:#3d52a0}
+    .tp{display:none}.tp.on{display:block}
+
+    /* ── STAFF PERFORMANCE GRID ── */
+    .staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;padding:14px}
+    .sc{
+      background:#fff;
+      border:2px solid #c7d0e8;
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow:0 2px 8px rgba(47,62,117,0.08);
+      transition:box-shadow .2s;
+    }
+    .sc:hover{box-shadow:0 4px 16px rgba(47,62,117,0.15);border-color:#3d52a0}
+    .sc-head{
+      padding:10px 13px;
+      border-bottom:2px solid #c7d0e8;
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;
+      background:linear-gradient(90deg,#2f3e75 0%,#3d52a0 100%);
+    }
+    .sc-name{font-size:13px;font-weight:700;color:#fff}
+
+    /* ── RANKINGS ── */
+    .rank-row{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 16px;
+      border-bottom:1.5px solid #e2e8f4;
+      font-size:12px;
+      background:#fff;
+      transition:background .15s;
+    }
+    .rank-row:last-child{border-bottom:none}
+    .rank-row:hover{background:#f0f4ff}
+    .rank-row:nth-child(even){background:#f8faff}
+    .rank-row:nth-child(even):hover{background:#eef2ff}
+    .rnum{
+      width:24px;height:24px;border-radius:50%;
+      background:#e8ecf4;
+      display:flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:700;flex-shrink:0;
+      border:2px solid #c7d0e8;color:#2f3e75;
+    }
+
+    /* ── SECTION LABELS (rankings / corrective dividers) ── */
+    .sec-label{
+      font-size:10px;font-weight:700;letter-spacing:.07em;
+      color:#fff;
+      padding:8px 16px;
+      text-transform:uppercase;
+      background:linear-gradient(90deg,#3d52a0 0%,#2f3e75 100%);
+      border-top:1px solid #c7d0e8;
+      border-bottom:1px solid #c7d0e8;
+    }
+
+    /* ── CORRECTIVE ACTION CARDS ── */
+    .ca-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:12px;padding:14px}
+    .ca-card{
+      border-radius:12px;overflow:hidden;
+      border:2px solid #e4e4e4;
+      box-shadow:0 2px 8px rgba(0,0,0,0.06);
+      transition:box-shadow .2s;
+    }
+    .ca-card:hover{box-shadow:0 4px 14px rgba(0,0,0,0.12)}
+    .ca-head{
+      padding:10px 14px;font-size:12px;font-weight:700;
+      border-bottom:2px solid rgba(0,0,0,0.1);
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .ca-body{padding:12px 14px;background:#fff;font-size:12px;color:#444}
+    .ca-stats{
+      display:flex;gap:12px;margin-bottom:10px;font-size:11px;flex-wrap:wrap;
+      padding-bottom:8px;border-bottom:1.5px solid #e8ecf4;
+    }
+    .step{display:flex;gap:8px;align-items:flex-start;margin-bottom:7px;padding-bottom:7px;border-bottom:1px dashed #e8ecf4}
+    .step:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+    .snum{
+      width:20px;height:20px;border-radius:50%;
+      background:#2f3e75;color:#fff;
+      display:flex;align-items:center;justify-content:center;
+      font-size:9px;font-weight:700;flex-shrink:0;margin-top:1px;
+    }
+
+    /* ── EMPTY / SPINNER ── */
+    .empty{padding:36px;text-align:center;color:#9ca3af;font-size:13px}
+    .spinner{padding:40px;text-align:center;color:#6b7280;font-size:14px}
+
+    /* ── MODAL ── */
+    .overlay{display:none;position:fixed;inset:0;background:rgba(15,23,60,.5);z-index:200;align-items:center;justify-content:center}
+    .overlay.open{display:flex}
+    .modal{
+      background:#fff;border-radius:14px;
+      width:440px;max-width:95vw;max-height:85vh;overflow-y:auto;
+      border:2px solid #c7d0e8;
+      box-shadow:0 12px 40px rgba(47,62,117,0.22);
+    }
+    .modal-head{
+      padding:13px 16px;
+      border-bottom:2px solid #c7d0e8;
+      display:flex;align-items:center;justify-content:space-between;
+      background:linear-gradient(90deg,#2f3e75 0%,#3d52a0 100%);
+      border-radius:12px 12px 0 0;
+    }
+    .modal-head h3{font-size:13px;font-weight:700;color:#fff}
+    .mclose{background:none;border:none;font-size:20px;color:#c7d0e8;cursor:pointer;line-height:1;padding:0}
+    .mclose:hover{color:#fff}
+    .modal-body{padding:14px 16px}
+
+    /* ── TREND TABLE alternating ── */
+    .trend-up{color:#166534;font-weight:700}
+    .trend-dn{color:#991b1b;font-weight:700}
+
+    @media(max-width:600px){
+      .topbar{padding:10px 12px}
+      .main{padding:10px 12px}
+      .metrics-row{grid-template-columns:1fr 1fr}
+      .staff-grid{grid-template-columns:1fr}
+      .ca-grid{grid-template-columns:1fr}
+    }
+.topbar a.nav-link {
+  font-size: 12px;
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 7px;
+  background: #fff;
+  color: #2f3e75;
+  font-weight: 600;
+  transition: all 0.2s;
+  margin-right: 10px; /* Space before dropdowns */
+}
+.topbar a.nav-link:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📊 Branch Review Dashboard</h1>
+  <a href="staff_dashboard.html" class="nav-link">Staff Productivity</a>
+  <span id="adminReportLink" style="display:none">
+    <a href="admin_report.html" class="nav-link" style="background:#fef3c7;color:#92400e">📋 Admin Report</a>
+  </span>
+  <select id="branchSel" onchange="onBranch()" style="display:none"></select>
+  <select id="modeSel" onchange="onMode()">
+    <option value="all">All staff</option>
+    <option value="single">Individual</option>
+  </select>
+  <select id="staffSel" style="display:none" onchange="render()"></select>
+  <span id="userInfo" style="font-size:11px;color:#c7d0e8;margin-left:4px"></span>
+  <button onclick="doExport()">⬇ Export</button>
+  <button onclick="doLogout()" style="background:rgba(255,255,255,0.15);color:#fff">Logout</button>
+</div>
+
+<div class="main" id="mainArea">
+  <div class="spinner" id="loader">⏳ Connecting to Google Sheets...</div>
+</div>
+
+<div class="overlay" id="overlay" onclick="maybeClose(event)">
+  <div class="modal" id="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Details</h3>
+      <button class="mclose" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const API      = "https://script.google.com/macros/s/AKfycbzy_um_SLPLkZAEvEjYGKR8N3QYXORaRJBe9_soQSUWhTY1sAhSYev3hWtywxFE3mvQtw/exec";
+const AUTH_URL = "https://script.google.com/macros/s/AKfycbzTPB10fdiNYo2mRF_pIsUuPfOhFW02_omSZYCPhPq_ybtVYqz5HWrbB7ia7C4lb5j7-g/exec";
+
+const MONTHS = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+const PLABEL = {
+  Investment : "Investment",
+  RD         : "Recurring Deposit",
+  GoldLoan   : "Gold Loan",
+  SOLAR      : "Solar",
+  Visit      : "Visit"
+};
+
+const STEPS = {
+  Investment: [
+    "Review client portfolio for cross-sell & upsell opportunities",
+    "Identify top 10 prospects not yet enrolled in any investment product",
+    "Weekly 1:1 coaching session focused on investment pitch skills",
+    "Set daily account-opening mini-targets to close the gap"
+  ],
+  RD: [
+    "Focus on salary-account holders not yet enrolled in RD",
+    "Run branch-level RD awareness session for walk-in customers",
+    "Buddy staff with top RD performer for peer learning",
+    "Set daily RD enrollment targets based on remaining gap"
+  ],
+  GoldLoan: [
+    "Map territory for high gold-holding households",
+    "Increase doorstep gold loan campaign frequency",
+    "Reduce appraisal wait time — fast-track process for repeat customers",
+    "Follow up with lapsed gold loan customers for renewals"
+  ],
+  SOLAR: [
+    "Partner with local solar dealers for inbound referral leads",
+    "Target agriculture & rural customers under solar schemes",
+    "Address top objections (EMI, installation) with updated material",
+    "Align with state subsidy programs to reduce customer cost"
+  ],
+  Visit: [
+    "Increase daily field visit count by at least 2 per day",
+    "Prioritise high-potential villages for cluster visits",
+    "Log every visit in CRM with next follow-up action",
+    "Conduct joint visits with branch manager for key prospects"
+  ]
+};
+
+// ── SESSION ──────────────────────────────────────────────────
+const SESSION_TOKEN  = localStorage.getItem("brToken");
+const SESSION_ROLE   = localStorage.getItem("brRole");
+const SESSION_BRANCH = localStorage.getItem("brBranch");
+const SESSION_NAME   = localStorage.getItem("brName");
+const SESSION_EMPID  = localStorage.getItem("brEmpId");
+const SESSION_DATE   = localStorage.getItem("brLoginDate");
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+// Auth guard — redirect to login if no valid session
+if (!SESSION_TOKEN || SESSION_DATE !== todayStr()) {
+  window.location.href = "login.html";
+}
+
+
+let selMonths = new Set(["Apr"]);
+let branch = null;
+
+/* ── SETUP UI FOR ROLE ── */
+function setupRoleUI() {
+  // User info label
+  document.getElementById("userInfo").textContent =
+    SESSION_NAME + (SESSION_ROLE === "staff" ? " (Staff)" : SESSION_ROLE === "branch" ? " (Branch)" : " (Admin)");
+
+  // Admin-only elements
+  if (SESSION_ROLE === "admin") {
+    document.getElementById("branchSel").style.display = "inline-block";
+    document.getElementById("adminReportLink").style.display = "inline";
+  }
+
+  // Staff reviewed bar
+  if (SESSION_ROLE === "staff") {
+    document.getElementById("reviewedBar").style.display = "flex";
+    // Add bottom padding so content isn't hidden behind bar
+    document.querySelector(".main").style.paddingBottom = "70px";
+  }
+}
+
+/* ── LOAD ── */
+/* ── LOAD ── */
+async function load() {
+  try {
+    const url = API + "?token=" + encodeURIComponent(SESSION_TOKEN);
+    console.log("Diagnostic target fetch URL:", url);
+    
+    const r = await fetch(url);
+    const j = await r.json();
+
+    // INTERCEPT SECURITY KICKOUT TO READ EVIDENCE
+    if (j.error === "unauthorized") {
+      alert("🛑 UNAUTHORIZED REJECTION DETECTED!\n\n" +
+            "Server Message: " + (j.reason || "None") + "\n\n" +
+            "Diagnostic Matrix:\n" + JSON.stringify(j.diagnostics, null, 2));
+      
+      console.error("Full Forensic Object:", j);
+      return; // Freezes the execution thread here so it doesn't run doLogout()
+    }
+
+    allData = j.branches;
+    setupRoleUI();
+
+    if (SESSION_ROLE === "admin") {
+      // Admin sees branch selector with all branches
+      const sel = document.getElementById("branchSel");
+      allData.forEach((b, i) => {
+        const o = document.createElement("option");
+        o.value = i; o.textContent = b.branchName;
+        sel.appendChild(o);
+      });
+    } else {
+      // Branch / staff — locked to their branch, no selector shown
+      // allData is already filtered by GAS to their branch only
+      // but we also filter client-side as a safety net
+      allData = allData.filter(b =>
+        b.branchName.trim().toLowerCase() === SESSION_BRANCH.trim().toLowerCase()
+      );
+    }
+
+    buildShell();
+    onBranch();
+  } catch(e) {
+    document.getElementById("loader").textContent = "❌ Could not load data. Check API URL and CORS settings.";
+  }
+}
+
+function onBranch() {
+  const sel = document.getElementById("branchSel");
+  const i   = SESSION_ROLE === "admin" ? (sel.value || 0) : 0;
+  branch    = allData[i];
+  if (!branch) return;
+
+  const ss = document.getElementById("staffSel");
+  ss.innerHTML = "";
+  (branch.staff || []).forEach(s => {
+    const o = document.createElement("option");
+    o.value = s.name; o.textContent = s.name;
+    ss.appendChild(o);
+  });
+  render();
+}
+
+/* ── LOGOUT ── */
+function doLogout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+/* ── MARK REVIEWED (staff only) ── */
+async function markReviewed() {
+  const btn = document.getElementById("reviewedBtn");
+  const msg = document.getElementById("reviewedMsg");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+
+  try {
+    const res = await fetch(AUTH_URL, {
+      method  : "POST",
+      headers : { "Content-Type": "application/json" },
+      body    : JSON.stringify({ action: "markReviewed", token: SESSION_TOKEN })
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      btn.textContent       = "✓ Reviewed";
+      btn.style.background  = "#166534";
+      btn.disabled          = true;
+      msg.textContent       = data.alreadyMarked
+        ? "✅ Already marked as reviewed today."
+        : "✅ Marked as reviewed for today. Thank you!";
+    } else {
+      btn.disabled    = false;
+      btn.textContent = "✓ Mark as Reviewed";
+      alert(data.error || "Could not save. Try again.");
+    }
+  } catch(e) {
+    btn.disabled    = false;
+    btn.textContent = "✓ Mark as Reviewed";
+    alert("Network error. Please try again.");
+  }
+}
+
+// Check if already reviewed today on load (staff only)
+async function checkReviewedStatus() {
+  if (SESSION_ROLE !== "staff") return;
+  try {
+    const res = await fetch(AUTH_URL, {
+      method  : "POST",
+      headers : { "Content-Type": "application/json" },
+      body    : JSON.stringify({ action: "markReviewed", token: SESSION_TOKEN })
+    });
+    // We only pre-check — don't actually mark, just see if already done
+    // Instead validate token and check log via a read-only approach
+    // The markReviewed endpoint returns alreadyMarked:true without double-writing
+    // because the GAS checks before appending
+    const data = await res.json();
+    if (data.ok && data.alreadyMarked) {
+      document.getElementById("reviewedBtn").textContent      = "✓ Reviewed";
+      document.getElementById("reviewedBtn").style.background = "#166534";
+      document.getElementById("reviewedBtn").disabled         = true;
+      document.getElementById("reviewedMsg").textContent      = "✅ Already marked as reviewed today.";
+    }
+  } catch(e) {}
+}
+
+
+
+function getMonths() { return MONTHS.filter(m => selMonths.has(m)); }
+
+function getStaff() {
+  const m = document.getElementById("modeSel").value;
+  const n = document.getElementById("staffSel").value;
+  let list = branch ? branch.staff || [] : [];
+  if (m === "single") list = list.filter(s => s.name === n);
+  return list;
+}
+
+/* ── CALC ── */
+// Always aggregates achievement over selected months.
+// Target = monthlyTarget × number of selected months (correct for multi-month).
+// monthlyTargetTotal (annual) is NOT used here — BL branch target handled separately in renderSnap.
+function calc(metric, months) {
+  let ach = 0;
+  months.forEach(m => ach += (metric.monthlyAchievement[m] || 0));
+  const tgt = (metric.monthlyTarget || 0) * months.length;
+  const pct = tgt > 0 ? Math.round(ach / tgt * 100) : 0;
+  return { ach, tgt, pct, gap: ach - tgt };
+}
+
+function pc(p) { return p >= 100 ? "#166534" : p >= 75 ? "#92400e" : "#991b1b"; }
+function bc(p) { return p >= 100 ? "bn" : p >= 75 ? "ba" : "bg"; }
+
+function fmt(n) {
+  n = Math.round(n);
+  const a = Math.abs(n), s = n < 0 ? "-" : "";
+  if (a >= 10000000) return s + (a/10000000).toFixed(1) + "Cr";
+  if (a >= 100000)   return s + (a/100000).toFixed(1) + "L";
+  if (a >= 1000)     return s + (a/1000).toFixed(1) + "K";
+  return n.toLocaleString();
+}
+
+/* ── SHELL ── */
+function buildShell() {
+  document.getElementById("mainArea").innerHTML = `
+    <div class="card">
+      <div class="months-row" id="mrow"></div>
+    </div>
+    <div id="snap"></div>
+    <div class="card">
+      <div class="tab-row">
+        <div class="tab on"  onclick="swTab('staff',this)">Staff Performance</div>
+        <div class="tab"     onclick="swTab('rank',this)">Rankings</div>
+        <div class="tab"     onclick="swTab('corrective',this)">Corrective Actions</div>
+        <div class="tab"     onclick="swTab('trend',this)">Month Trend</div>
+      </div>
+      <div class="tp on" id="tp-staff"></div>
+      <div class="tp"    id="tp-rank"></div>
+      <div class="tp"    id="tp-corrective"></div>
+      <div class="tp"    id="tp-trend"></div>
+    </div>`;
+  buildMonthRow();
+}
+
+function buildMonthRow() {
+  const row = document.getElementById("mrow");
+  row.innerHTML = `<span style="font-size:11px;color:#888;margin-right:6px;flex-shrink:0;font-weight:600">MONTHS:</span>`;
+  MONTHS.forEach(m => {
+    const c = document.createElement("span");
+    c.className = "chip" + (selMonths.has(m) ? " on" : "");
+    c.textContent = m;
+    c.onclick = () => {
+      if (selMonths.has(m)) { if (selMonths.size > 1) selMonths.delete(m); }
+      else selMonths.add(m);
+      buildMonthRow(); render();
+    };
+    row.appendChild(c);
+  });
+  const ab = document.createElement("button");
+  ab.textContent = "All"; ab.style = "font-size:10px;padding:3px 9px;margin-left:6px";
+  ab.onclick = () => { MONTHS.forEach(m => selMonths.add(m)); buildMonthRow(); render(); };
+  row.appendChild(ab);
+  const cb = document.createElement("button");
+  cb.textContent = "Clear"; cb.style = "font-size:10px;padding:3px 9px;margin-left:3px";
+  cb.onclick = () => {
+    const first = selMonths.values().next().value;
+    selMonths.clear(); selMonths.add(first);
+    buildMonthRow(); render();
+  };
+  row.appendChild(cb);
+}
+
+function swTab(name, el) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("on"));
+  document.querySelectorAll(".tp").forEach(p => p.classList.remove("on"));
+  el.classList.add("on");
+  document.getElementById("tp-" + name).classList.add("on");
+}
+
+/* ── RENDER ── */
+function render() {
+  if (!branch) return;
+  const months = getMonths();
+  const staff  = getStaff();
+  renderSnap(staff, months);
+  renderStaff(staff, months);
+  renderRank(staff, months);
+  renderCorrective(staff, months);
+  renderTrend(staff, months);
+}
+
+/* ── SNAPSHOT ── */
+function renderSnap(staff, months) {
+  let totals = {};
+
+  staff.forEach(s => {
+    for (let k in s.metrics) {
+      if (!totals[k]) totals[k] = { tgt: 0, ach: 0 };
+      const metric = s.metrics[k];
+      months.forEach(m => { totals[k].ach += (metric.monthlyAchievement[m] || 0); });
+      totals[k].tgt += (metric.monthlyTarget || 0) * months.length;
+    }
+  });
+
+  const realStaff  = staff.filter(s => s.name.toUpperCase() !== "TOTAL");
+  const staffCount = realStaff.length;
+  let onTgt = 0, belowProd = 0;
+
+  realStaff.forEach(s => {
+    let sa = 0, st = 0;
+    for (let k in s.metrics) {
+      const metric = s.metrics[k];
+      months.forEach(m => { sa += (metric.monthlyAchievement[m] || 0); });
+      st += (metric.monthlyTarget || 0) * months.length;
+    }
+    if (st > 0 && sa >= st) onTgt++;
+  });
+
+  for (let k in totals) {
+    const p = totals[k].tgt > 0 ? Math.round(totals[k].ach / totals[k].tgt * 100) : 100;
+    if (p < 100) belowProd++;
+  }
+
+  const mlist = [...selMonths].sort((a,b) => MONTHS.indexOf(a) - MONTHS.indexOf(b)).join(", ");
+
+  let rows = "";
+  for (let k in totals) {
+    const p = totals[k].tgt > 0 ? Math.round(totals[k].ach / totals[k].tgt * 100) : 0;
+    const g = totals[k].ach - totals[k].tgt;
+    rows += `<tr>
+      <td style="font-weight:600">${PLABEL[k]||k}</td>
+      <td>${fmt(totals[k].tgt)}</td>
+      <td>${fmt(totals[k].ach)}</td>
+      <td><div class="bar-wrap">
+        <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(p,100)}%;background:${pc(p)}"></div></div>
+        <span class="badge ${bc(p)}" style="min-width:38px;text-align:center">${p}%</span>
+      </div></td>
+      <td style="color:${g<0?"#991b1b":"#166534"};font-weight:700">${g>=0?"+":""}${fmt(g)}</td>
+    </tr>`;
+  }
+
+  // 3. Update the HTML output to use staffCount (around line 285 in your index.html)
+  // Ensure the KPI card displays: ${onTgt} / ${staffCount}
+
+  document.getElementById("snap").innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <h2>🏢 Branch Snapshot — ${branch.branchName}</h2>
+        <span style="font-size:11px;color:#c7d0e8">${mlist}</span>
+      </div>
+      <div class="metrics-row">
+        <div class="mc"><div class="ml">Staff On Target</div><div class="mv" style="color:${onTgt===staffCount?"#166534":"#991b1b"}">${onTgt} / ${staffCount}</div><div class="ms">staff members</div></div>
+        <div class="mc"><div class="ml">Products Below Target</div><div class="mv" style="color:${belowProd===0?"#166534":"#991b1b"}">${belowProd}</div><div class="ms">of ${Object.keys(totals).length} products</div></div>
+        <div class="mc"><div class="ml">Period</div><div class="mv" style="font-size:13px">${months.length}</div><div class="ms">${months.length===1?"month selected":"months selected"}</div></div>
+      </div>
+      <table>
+        <thead><tr><th>Product</th><th>Target</th><th>Achievement</th><th>Progress</th><th>Gap</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+/* ── STAFF TAB ── */
+function renderStaff(staff, months) {
+  if (!staff.length) { document.getElementById("tp-staff").innerHTML = `<div class="empty">No staff to display.</div>`; return; }
+  const mLabel = months.length === 1 ? months[0] : months.join("+");
+  let html = `<div class="staff-grid">`;
+  staff.forEach(s => {
+    let sa = 0, st = 0, rows = "";
+    for (let k in s.metrics) {
+      const r      = calc(s.metrics[k], months);
+      const metric = s.metrics[k];
+      sa += r.ach; st += r.tgt;
+      const gap = r.gap;
+      rows += `<tr>
+        <td style="color:#555">${PLABEL[k]||k}</td>
+        <td>${fmt(r.tgt)}</td>
+        <td style="cursor:pointer;color:#1d4ed8;text-decoration:underline"
+            onclick='openBreak(${JSON.stringify(s.name)},${JSON.stringify(k)},${JSON.stringify(metric)})'>${fmt(r.ach)}</td>
+        <td><span class="badge ${bc(r.pct)}">${r.pct}%</span></td>
+        <td style="color:${gap<0?"#991b1b":"#166534"};font-weight:700">${gap>=0?"+":""}${fmt(gap)}</td>
+      </tr>`;
+      // Outstanding sub-row — Investment, GoldLoan, RD
+      if ((k === "Investment" || k === "GoldLoan" || k === "RD") && metric.outstanding !== null && metric.outstanding !== undefined) {
+        rows += `<tr style="background:#fffbeb">
+          <td style="color:#92400e;font-size:11px;padding-left:20px">↳ Outstanding</td>
+          <td colspan="4" style="color:#92400e;font-weight:600;font-size:11px">${fmt(metric.outstanding)}</td>
+        </tr>`;
+      }
+    }
+    const op = st > 0 ? Math.round(sa / st * 100) : 0;
+    let dojBadge = "";
+    if (s.doj) {
+      const parts   = s.doj.split("-");
+      const dojDate = new Date(`${parts[1]} ${parts[0]} ${parts[2]}`);
+      const yrs     = (Date.now() - dojDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+      const display = yrs < 1 ? `${Math.round(yrs * 12)}m` : `${yrs.toFixed(1)}y`;
+      dojBadge = `<span style="font-size:10px;color:#c7d0e8;font-weight:400;margin-left:6px">DOJ: ${s.doj} <span style="color:#93c5fd;font-weight:700">(${display})</span></span>`;
+    }
+    html += `<div class="sc">
+      <div class="sc-head">
+        <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap">
+          <span class="sc-name">👤 ${s.name}</span>${dojBadge}
+        </div>
+        <span class="badge ${bc(op)}">${op}% — ${mLabel}</span>
+      </div>
+      <table>
+        <thead><tr><th>Product</th><th>Target</th><th>Achieved</th><th>%</th><th>Gap</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  });
+  html += `</div>`;
+  document.getElementById("tp-staff").innerHTML = html;
+}
+
+/* ── RANKINGS TAB ── */
+function renderRank(staff, months) {
+  if (!staff.length) { document.getElementById("tp-rank").innerHTML = `<div class="empty">No data.</div>`; return; }
+  // Overall ranking excludes BL (no individual target)
+  const scores = staff.map(s => {
+    let a = 0, t = 0;
+    for (let k in s.metrics) {
+      if (k === "BusinessLoan") continue;
+      const r = calc(s.metrics[k], months); a += r.ach; t += r.tgt;
+    }
+    return { name: s.name, ach: a, tgt: t, pct: t > 0 ? Math.round(a / t * 100) : 0 };
+  }).sort((a, b) => b.pct - a.pct);
+
+  const medals = ["#f59e0b","#94a3b8","#b45309"];
+  let html = `<div class="sec-label">🏆 Overall Ranking</div>`;
+  scores.forEach((s, i) => {
+    const mbg = i < 3 ? medals[i] : "";
+    html += `<div class="rank-row">
+      <div class="rnum" style="${mbg ? "background:"+mbg+";color:#fff;border-color:"+mbg : ""}">${i+1}</div>
+      <div style="flex:1;font-weight:600;font-size:12px">${s.name}</div>
+      <div class="bar-wrap" style="width:140px">
+        <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(s.pct,100)}%;background:${pc(s.pct)}"></div></div>
+      </div>
+      <span class="badge ${bc(s.pct)}" style="min-width:38px;text-align:center">${s.pct}%</span>
+      <span style="font-size:11px;color:#888;min-width:52px;text-align:right">${fmt(s.ach)}</span>
+    </div>`;
+  });
+
+  const products = Object.keys(staff[0]?.metrics || {});
+  products.forEach(p => {
+    html += `<div class="sec-label">${PLABEL[p]||p}</div>`;
+    const ps = staff.map(s => {
+      const r = s.metrics[p] ? calc(s.metrics[p], months) : {ach:0,tgt:0,pct:0,gap:0};
+      return { name: s.name, ...r };
+    }).sort((a, b) => b.pct - a.pct);
+    ps.forEach((s, i) => {
+      html += `<div class="rank-row">
+        <div class="rnum">${i+1}</div>
+        <div style="flex:1;font-size:12px">${s.name}</div>
+        <div class="bar-wrap" style="width:140px">
+          <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(s.pct,100)}%;background:${pc(s.pct)}"></div></div>
+        </div>
+        <span class="badge ${bc(s.pct)}" style="min-width:38px;text-align:center">${s.pct}%</span>
+        <span style="font-size:11px;color:#888;min-width:52px;text-align:right">${fmt(s.ach)}</span>
+      </div>`;
+    });
+  });
+
+  document.getElementById("tp-rank").innerHTML = html;
+}
+
+/* ── CORRECTIVE ACTIONS TAB ── */
+function renderCorrective(staff, months) {
+  let actions = [];
+  staff.forEach(s => {
+    for (let k in s.metrics) {
+      const r = calc(s.metrics[k], months);
+      if (r.pct < 100) actions.push({ staff: s.name, product: k, pct: r.pct, ach: r.ach, tgt: r.tgt, gap: r.gap });
+    }
+  });
+
+  actions.sort((a, b) => a.pct - b.pct);
+
+  if (!actions.length) {
+    document.getElementById("tp-corrective").innerHTML = `<div class="empty">✅ All staff on target — outstanding performance!</div>`;
+    return;
+  }
+
+  const crit = actions.filter(a => a.pct < 50);
+  const risk = actions.filter(a => a.pct >= 50 && a.pct < 75);
+  const near = actions.filter(a => a.pct >= 75 && a.pct < 100);
+
+  function caCard(a, bg, tc, bc2) {
+    const steps = STEPS[a.product] || [
+      "Deep-dive review of pipeline with staff member",
+      "Set daily activity targets to close the gap",
+      "Monitor progress every 3 days",
+      "Escalate to manager if no improvement in 7 days"
+    ];
+    const label = PLABEL[a.product] || a.product;
+    const stepsHTML = steps.map((st, i) =>
+      `<div class="step"><div class="snum">${i+1}</div><div>${st}</div></div>`
+    ).join("");
+    return `<div class="ca-card" style="border-color:${bc2}">
+      <div class="ca-head" style="background:${bg};color:${tc};border-bottom-color:${bc2}">
+        <span>${a.staff} — ${label}</span>
+        <span class="badge" style="background:rgba(0,0,0,0.12);color:${tc}">${a.pct}%</span>
+      </div>
+      <div class="ca-body">
+        <div class="ca-stats">
+          <span>Target: <b style="color:#222">${fmt(a.tgt)}</b></span>
+          <span>Done: <b style="color:#222">${fmt(a.ach)}</b></span>
+          <span>Gap: <b style="color:${tc}">${fmt(Math.abs(a.gap))}</b></span>
+        </div>
+        ${stepsHTML}
+      </div>
+    </div>`;
+  }
+
+  let html = "";
+  if (crit.length) {
+    html += `<div class="sec-label" style="color:#991b1b">🔴 Critical — Below 50% (${crit.length} items)</div><div class="ca-grid">`;
+    crit.forEach(a => html += caCard(a, "#fee2e2", "#991b1b", "#fca5a5"));
+    html += `</div>`;
+  }
+  if (risk.length) {
+    html += `<div class="sec-label" style="color:#92400e">🟡 At Risk — 50–75% (${risk.length} items)</div><div class="ca-grid">`;
+    risk.forEach(a => html += caCard(a, "#fef3c7", "#92400e", "#fcd34d"));
+    html += `</div>`;
+  }
+  if (near.length) {
+    html += `<div class="sec-label" style="color:#166534">🟢 Near Target — 75–99% (${near.length} items)</div><div class="ca-grid">`;
+    near.forEach(a => html += caCard(a, "#dcfce7", "#166534", "#86efac"));
+    html += `</div>`;
+  }
+
+  document.getElementById("tp-corrective").innerHTML = html;
+}
+
+/* ── MONTH TREND TAB ── */
+function renderTrend(staff, months) {
+  if (!staff.length) { document.getElementById("tp-trend").innerHTML = `<div class="empty">No data.</div>`; return; }
+  let html = "";
+
+  staff.forEach(s => {
+    const products = Object.keys(s.metrics || {});
+    if (!products.length) return;
+
+    html += `<div class="sec-label">👤 ${s.name}</div>`;
+    html += `<div style="overflow-x:auto"><table><thead><tr>
+      <th>Product</th>`;
+    MONTHS.forEach(m => html += `<th style="${selMonths.has(m) ? "border-bottom:3px solid #93c5fd" : "opacity:0.45"}">${m}</th>`);
+    html += `<th>Selected Total</th></tr></thead><tbody>`;
+
+    products.forEach(p => {
+      if (!s.metrics[p]) return;
+      const ma = s.metrics[p].monthlyAchievement;
+      const mt = s.metrics[p].monthlyTarget || 0;
+      let total = 0;
+      let cells = "";
+      let prev = null;
+
+      MONTHS.forEach(m => {
+        const v = ma[m] || 0;
+        if (selMonths.has(m)) total += v;
+        let arrow = "";
+        if (prev !== null) {
+          arrow = v > prev
+            ? `<span class="trend-up"> ↑</span>`
+            : v < prev
+            ? `<span class="trend-dn"> ↓</span>`
+            : `<span style="color:#bbb"> —</span>`;
+        }
+        const dim = !selMonths.has(m) ? "opacity:0.3;" : "";
+        const hi  = mt > 0 && v >= mt ? "background:#f0fdf4;" : "";
+        cells += `<td style="${dim}${hi}">${v}${arrow}</td>`;
+        prev = v;
+      });
+
+      // For BL — label as branch target, no green highlight logic
+      const productLabel = p === "BusinessLoan"
+        ? `<span style="color:#555">${PLABEL[p]}</span> <span style="font-size:10px;color:#9ca3af;font-style:italic">branch</span>`
+        : PLABEL[p] || p;
+
+      html += `<tr>
+        <td style="font-weight:600;white-space:nowrap">${productLabel}</td>
+        ${cells}
+        <td style="font-weight:700;color:#2f3e75">${fmt(total)}</td>
+      </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+  });
+
+  document.getElementById("tp-trend").innerHTML = html;
+}
+
+/* ── BREAKDOWN MODAL ── */
+function openBreak(sname, pkey, metric) {
+  document.getElementById("modalTitle").textContent = sname + " — " + (PLABEL[pkey] || pkey);
+  const months = getMonths();
+  const r  = calc(metric, months);
+  const mt = metric.monthlyTarget || 0;
+  let rows = MONTHS.map((m, idx) => {
+    const v   = metric.monthlyAchievement[m] || 0;
+    const p   = mt > 0 ? Math.round(v / mt * 100) : 0;
+    const sel = selMonths.has(m);
+    let arrow = "";
+    if (idx > 0) {
+      const pv = metric.monthlyAchievement[MONTHS[idx-1]] || 0;
+      arrow = v > pv ? `<span class="trend-up">↑</span>` : v < pv ? `<span class="trend-dn">↓</span>` : `<span style="color:#bbb">—</span>`;
+    }
+    return `<tr style="${!sel ? "opacity:0.35" : ""}">
+      <td>${m}${sel ? ` <span class="badge bb" style="font-size:9px">selected</span>` : ""}</td>
+      <td>${v} ${arrow}</td>
+      <td><div class="bar-wrap">
+        <div class="bar-bg" style="min-width:80px">
+          <div class="bar-fill" style="width:${Math.min(p,100)}%;background:${pc(p)}"></div>
+        </div>
+      </div></td>
+      <td><span class="badge ${bc(p)}">${p}%</span></td>
+    </tr>`;
+  }).join("");
+
+  // Outstanding block — only for Investment and GoldLoan
+  const outstandingHTML = (pkey === "Investment" || pkey === "GoldLoan") && metric.outstanding !== null && metric.outstanding !== undefined
+    ? `<div style="margin-top:10px;padding:8px 10px;background:#fffbeb;border-radius:7px;border:1px solid #fcd34d;font-size:12px">
+        <span style="color:#92400e;font-weight:600">Outstanding portfolio: </span>
+        <span style="color:#92400e;font-weight:700">${fmt(metric.outstanding)}</span>
+       </div>`
+    : "";
+
+  document.getElementById("modalBody").innerHTML = `
+    <div style="margin-bottom:10px;font-size:12px;color:#888">Monthly target: <b style="color:#222">${fmt(mt)}</b></div>
+    <table style="font-size:12px">
+      <thead><tr><th>Month</th><th>Achievement</th><th>vs Target</th><th>%</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;display:flex;gap:16px;font-size:12px;flex-wrap:wrap">
+      <span>Selected total: <b>${fmt(r.ach)}</b></span>
+      <span>Target: <b>${fmt(r.tgt)}</b></span>
+      <span style="color:${pc(r.pct)};font-weight:700">${r.pct}%</span>
+    </div>
+    ${outstandingHTML}`;
+  document.getElementById("overlay").classList.add("open");
+}
+
+function maybeClose(e) { if (e.target === document.getElementById("overlay")) closeModal(); }
+function closeModal()   { document.getElementById("overlay").classList.remove("open"); }
+
+/* ── EXPORT ── */
+function doExport() {
+  if (!branch) return;
+  const months = getMonths();
+  const staff  = getStaff();
+  let txt = `BRANCH REVIEW REPORT\n`;
+  txt += `Branch  : ${branch.branchName}\n`;
+  txt += `Months  : ${months.join(", ")}\n`;
+  txt += `Generated: ${new Date().toLocaleString()}\n\n`;
+  txt += `${"=".repeat(55)}\nBRANCH SUMMARY\n${"=".repeat(55)}\n`;
+
+  let totals = {};
+  staff.forEach(s => {
+    for (let k in s.metrics) {
+      if (!totals[k]) totals[k] = { tgt: 0, ach: 0 };
+      const r = calc(s.metrics[k], months);
+      totals[k].tgt += r.tgt; totals[k].ach += r.ach;
+    }
+  });
+  for (let k in totals) {
+    const p = totals[k].tgt > 0 ? Math.round(totals[k].ach / totals[k].tgt * 100) : 0;
+    txt += `${(PLABEL[k]||k).padEnd(20)} ${fmt(totals[k].ach).padStart(8)} / ${fmt(totals[k].tgt).padStart(8)}  ${String(p+"%").padStart(5)}\n`;
+  }
+
+  txt += `\n${"=".repeat(55)}\nSTAFF DETAILS\n${"=".repeat(55)}\n`;
+  staff.forEach(s => {
+    txt += `\n${s.name}\n${"-".repeat(35)}\n`;
+    for (let k in s.metrics) {
+      const r = calc(s.metrics[k], months);
+      txt += `  ${(PLABEL[k]||k).padEnd(18)} ${fmt(r.ach).padStart(8)} / ${fmt(r.tgt).padStart(8)}  ${String(r.pct+"%").padStart(5)}  gap: ${fmt(r.gap)}\n`;
+    }
+  });
+
+  txt += `\n${"=".repeat(55)}\nCORRECTIVE ACTIONS REQUIRED\n${"=".repeat(55)}\n`;
+  staff.forEach(s => {
+    for (let k in s.metrics) {
+      const r = calc(s.metrics[k], months);
+      if (r.pct < 100) {
+        txt += `\n${s.name} — ${PLABEL[k]||k} (${r.pct}%)\n`;
+        const steps = STEPS[k] || [];
+        steps.forEach((st, i) => txt += `  ${i+1}. ${st}\n`);
+      }
+    }
+  });
+
+  const b = new Blob([txt], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(b);
+  a.download = `review_${branch.branchName}_${months.join("-")}.txt`;
+  a.click();
+}
+
+/* ── INIT ── */
+load().then(() => checkReviewedStatus());
+</script>
+<!-- Staff reviewed button — shown only for staff role -->
+<div id="reviewedBar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:linear-gradient(90deg,#2f3e75,#3d52a0);
+  padding:12px 18px;display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 -2px 12px rgba(0,0,0,0.2);flex-wrap:wrap;gap:8px">
+  <span style="font-size:13px;color:#fff;font-weight:600" id="reviewedMsg">
+    📌 Have you reviewed your performance for today?
+  </span>
+  <button id="reviewedBtn" onclick="markReviewed()"
+    style="padding:8px 20px;background:#22c55e;color:#fff;border:none;border-radius:8px;
+    font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.03em">
+    ✓ Mark as Reviewed
+  </button>
+</div>
+
+</body>
+</html>
