@@ -194,6 +194,17 @@ function todayStr() {
     String(d.getDate()).padStart(2,"0");
 }
 
+// SSO: arriving from SML dashboard with ?sso=1 — seed localStorage and skip login
+(function ssoSeed() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get("sso") !== "1") return;
+  ["brToken","brRole","brBranch","brName","brEmpId","brLoginDate"].forEach(k => {
+    const v = p.get(k);
+    if (v) localStorage.setItem(k, v);
+  });
+  window.history.replaceState(null, "", window.location.pathname); // strip params from URL
+})();
+
 // If already logged in today, redirect immediately
 (function checkSession() {
   const token     = localStorage.getItem("brToken");
