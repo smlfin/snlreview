@@ -1,243 +1,682 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <title>Branch Review Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap" rel="stylesheet">
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,sans-serif;background:#e8ecf4;color:#1a1a2e;min-height:100vh}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── TOPBAR ── */
-    .topbar{background:#2f3e75;padding:12px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,0.18)}
-    .topbar h1{font-size:16px;font-weight:700;flex:1;min-width:150px;color:#fff;letter-spacing:.02em}
-    select{font-size:12px;padding:6px 10px;border:1px solid #c7d0e8;border-radius:7px;background:#fff;color:#1a1a2e;cursor:pointer}
-    button{font-size:12px;padding:6px 14px;border:none;border-radius:7px;background:#fff;color:#2f3e75;cursor:pointer;font-weight:600}
-    button:hover{background:#dbeafe;color:#1d4ed8}
-
-    /* ── LAYOUT ── */
-    .main{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
-
-    /* ── OUTER CARDS (snapshot, tab container, month picker) ── */
-    .card{
-      background:#fff;
-      border:2px solid #c7d0e8;
-      border-radius:14px;
-      overflow:hidden;
-      box-shadow:0 2px 10px rgba(47,62,117,0.08);
-    }
-    .card-head{
-      padding:11px 16px;
-      border-bottom:2px solid #c7d0e8;
-      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;
-      background:linear-gradient(90deg,#2f3e75 0%,#3d52a0 100%);
-    }
-    .card-head h2{font-size:13px;font-weight:700;color:#fff;letter-spacing:.02em}
-    .card-head span{color:#c7d0e8!important}
-
-    /* ── MONTH CHIPS ── */
-    .months-row{display:flex;flex-wrap:wrap;gap:5px;padding:10px 15px;border-bottom:2px solid #c7d0e8;align-items:center;background:#f4f6fc}
-    .chip{display:inline-block;padding:3px 11px;border-radius:7px;background:#fff;border:1.5px solid #c7d0e8;font-size:11px;cursor:pointer;color:#555;font-weight:500;transition:all .15s}
-    .chip.on{background:#2f3e75;color:#fff;border-color:#2f3e75;font-weight:700}
-    .chip:hover:not(.on){background:#e8ecf4;border-color:#3d52a0}
-
-    /* ── KPI METRIC CARDS ── */
-    .metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;padding:14px 16px;background:#f4f6fc;border-bottom:2px solid #c7d0e8}
-    .mc{
-      background:#fff;
-      border-radius:10px;
-      padding:12px 14px;
-      border:1.5px solid #c7d0e8;
-      box-shadow:0 1px 4px rgba(47,62,117,0.07);
-    }
-    .mc .ml{font-size:10px;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
-    .mc .mv{font-size:22px;font-weight:700;line-height:1.1}
-    .mc .ms{font-size:10px;color:#9ca3af;margin-top:3px}
-
-    /* ── TABLES (snapshot product table + trend table) ── */
-    table{width:100%;border-collapse:collapse;font-size:12px}
-    thead{background:#2f3e75}
-    th{
-      background:#2f3e75;color:#fff;
-      padding:9px 12px;text-align:left;
-      font-weight:700;font-size:11px;
-      border-right:1px solid rgba(255,255,255,0.15);
-      letter-spacing:.03em;
-    }
-    th:last-child{border-right:none}
-    td{
-      padding:9px 12px;
-      border-bottom:1.5px solid #e2e8f4;
-      border-right:1px solid #edf0f7;
-      vertical-align:middle;
-      background:#fff;
-    }
-    td:last-child{border-right:none}
-    tr:last-child td{border-bottom:none}
-    tr:nth-child(even) td{background:#f8faff}
-    tr:hover td{background:#eef2ff!important}
-
-    /* ── STAFF CARD TABLE — tighter padding ── */
-    .sc table td{padding:7px 8px}
-    .sc table th{padding:7px 8px}
-
-    /* ── PROGRESS BAR ── */
-    .bar-wrap{display:flex;align-items:center;gap:7px}
-    .bar-bg{flex:1;height:7px;border-radius:4px;background:#e2e8f4;overflow:hidden;min-width:50px;border:1px solid #d1d9ef}
-    .bar-fill{height:100%;border-radius:4px;transition:width .4s}
-
-    /* ── BADGES ── */
-    .badge{font-size:10px;padding:3px 8px;border-radius:6px;font-weight:700;white-space:nowrap;letter-spacing:.02em}
-    .bg{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
-    .ba{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
-    .bn{background:#dcfce7;color:#166534;border:1px solid #86efac}
-    .bb{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
-
-    /* ── TABS ── */
-    .tab-row{display:flex;border-bottom:2px solid #c7d0e8;overflow-x:auto;background:#f4f6fc}
-    .tab{padding:11px 18px;font-size:12px;cursor:pointer;border-bottom:3px solid transparent;color:#6b7280;white-space:nowrap;flex-shrink:0;font-weight:600;transition:all .15s}
-    .tab.on{border-bottom-color:#2f3e75;color:#2f3e75;background:#fff}
-    .tab:hover:not(.on){background:#eef2ff;color:#3d52a0}
-    .tp{display:none}.tp.on{display:block}
-
-    /* ── STAFF PERFORMANCE GRID ── */
-    .staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;padding:14px}
-    .sc{
-      background:#fff;
-      border:2px solid #c7d0e8;
-      border-radius:12px;
-      overflow:hidden;
-      box-shadow:0 2px 8px rgba(47,62,117,0.08);
-      transition:box-shadow .2s;
-    }
-    .sc:hover{box-shadow:0 4px 16px rgba(47,62,117,0.15);border-color:#3d52a0}
-    .sc-head{
-      padding:10px 13px;
-      border-bottom:2px solid #c7d0e8;
-      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;
-      background:linear-gradient(90deg,#2f3e75 0%,#3d52a0 100%);
-    }
-    .sc-name{font-size:13px;font-weight:700;color:#fff}
-
-    /* ── RANKINGS ── */
-    .rank-row{
-      display:flex;align-items:center;gap:10px;
-      padding:10px 16px;
-      border-bottom:1.5px solid #e2e8f4;
-      font-size:12px;
-      background:#fff;
-      transition:background .15s;
-    }
-    .rank-row:last-child{border-bottom:none}
-    .rank-row:hover{background:#f0f4ff}
-    .rank-row:nth-child(even){background:#f8faff}
-    .rank-row:nth-child(even):hover{background:#eef2ff}
-    .rnum{
-      width:24px;height:24px;border-radius:50%;
-      background:#e8ecf4;
-      display:flex;align-items:center;justify-content:center;
-      font-size:10px;font-weight:700;flex-shrink:0;
-      border:2px solid #c7d0e8;color:#2f3e75;
+    :root {
+      --bg:        #f0f2f8;
+      --surf:      #ffffff;
+      --surf2:     #f7f8fc;
+      --surf3:     #eef0f7;
+      --border:    rgba(60,80,160,0.13);
+      --border2:   rgba(60,80,160,0.22);
+      --navy:      #1e3a8a;
+      --navy2:     #2d4db0;
+      --navy3:     #3b5ec4;
+      --text:      #0f172a;
+      --text2:     #475569;
+      --text3:     #94a3b8;
+      --green:     #166534;
+      --green-l:   #dcfce7;
+      --green-b:   #86efac;
+      --amber:     #92400e;
+      --amber-l:   #fef3c7;
+      --amber-b:   #fcd34d;
+      --red:       #991b1b;
+      --red-l:     #fee2e2;
+      --red-b:     #fca5a5;
+      --blue:      #1e40af;
+      --blue-l:    #dbeafe;
+      --blue-b:    #93c5fd;
+      /* RD teal */
+      --teal:      #0f766e;
+      --teal-l:    #ccfbf1;
+      --teal-b:    #5eead4;
+      --r:         14px;
+      --r-sm:      9px;
+      --shadow:    0 1px 3px rgba(15,23,80,.07), 0 4px 16px rgba(15,23,80,.05);
+      --shadow-md: 0 4px 20px rgba(15,23,80,.13);
     }
 
-    /* ── SECTION LABELS (rankings / corrective dividers) ── */
-    .sec-label{
-      font-size:10px;font-weight:700;letter-spacing:.07em;
-      color:#fff;
-      padding:8px 16px;
-      text-transform:uppercase;
-      background:linear-gradient(90deg,#3d52a0 0%,#2f3e75 100%);
-      border-top:1px solid #c7d0e8;
-      border-bottom:1px solid #c7d0e8;
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ── CORRECTIVE ACTION CARDS ── */
-    .ca-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:12px;padding:14px}
-    .ca-card{
-      border-radius:12px;overflow:hidden;
-      border:2px solid #e4e4e4;
-      box-shadow:0 2px 8px rgba(0,0,0,0.06);
-      transition:box-shadow .2s;
+    /* ━━━ TOPBAR ━━━ */
+    .topbar {
+      background: var(--navy);
+      height: 54px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 400;
+      box-shadow: 0 2px 12px rgba(15,23,80,.25);
     }
-    .ca-card:hover{box-shadow:0 4px 14px rgba(0,0,0,0.12)}
-    .ca-head{
-      padding:10px 14px;font-size:12px;font-weight:700;
-      border-bottom:2px solid rgba(0,0,0,0.1);
-      display:flex;align-items:center;justify-content:space-between;
+    .topbar h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .ca-body{padding:12px 14px;background:#fff;font-size:12px;color:#444}
-    .ca-stats{
-      display:flex;gap:12px;margin-bottom:10px;font-size:11px;flex-wrap:wrap;
-      padding-bottom:8px;border-bottom:1.5px solid #e8ecf4;
+    .topbar h1::before {
+      content: '';
+      display: inline-block;
+      width: 26px; height: 26px;
+      background: linear-gradient(135deg,#60a5fa,#818cf8);
+      border-radius: 7px;
+      flex-shrink: 0;
     }
-    .step{display:flex;gap:8px;align-items:flex-start;margin-bottom:7px;padding-bottom:7px;border-bottom:1px dashed #e8ecf4}
-    .step:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
-    .snum{
-      width:20px;height:20px;border-radius:50%;
-      background:#2f3e75;color:#fff;
-      display:flex;align-items:center;justify-content:center;
-      font-size:9px;font-weight:700;flex-shrink:0;margin-top:1px;
+    .topbar a.nav-link {
+      font-size: 12px;
+      font-family: inherit;
+      text-decoration: none;
+      padding: 6px 13px;
+      border-radius: 7px;
+      background: rgba(255,255,255,.10);
+      color: rgba(255,255,255,.88);
+      font-weight: 500;
+      transition: background .15s;
+      white-space: nowrap;
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .topbar a.nav-link:hover { background: rgba(255,255,255,.18); }
+    .topbar a.nav-link.admin-link {
+      background: rgba(251,191,36,.15);
+      color: #fbbf24;
+      border-color: rgba(251,191,36,.25);
+    }
+    select {
+      font-family: inherit;
+      font-size: 12px;
+      padding: 6px 10px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 7px;
+      background: rgba(255,255,255,.10);
+      color: #fff;
+      cursor: pointer;
+      outline: none;
+    }
+    select option { background: #1e3a8a; color: #fff; }
+    .tb-btn {
+      font-family: inherit;
+      font-size: 12px;
+      padding: 6px 13px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 7px;
+      background: rgba(255,255,255,.10);
+      color: rgba(255,255,255,.88);
+      cursor: pointer;
+      font-weight: 500;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+    .tb-btn:hover { background: rgba(255,255,255,.18); }
+    .tb-btn.danger {
+      background: rgba(239,68,68,.15);
+      border-color: rgba(239,68,68,.25);
+      color: #fca5a5;
+    }
+    .tb-btn.danger:hover { background: rgba(239,68,68,.25); }
+    #userInfo { font-size: 11px; color: rgba(255,255,255,.4); white-space: nowrap; flex-shrink: 0; }
+
+    /* ━━━ LAYOUT ━━━ */
+    .main {
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-width: 1440px;
+      margin: 0 auto;
     }
 
-    /* ── EMPTY / SPINNER ── */
-    .empty{padding:36px;text-align:center;color:#9ca3af;font-size:13px}
-    .spinner{padding:40px;text-align:center;color:#6b7280;font-size:14px}
-
-    /* ── MODAL ── */
-    .overlay{display:none;position:fixed;inset:0;background:rgba(15,23,60,.5);z-index:200;align-items:center;justify-content:center}
-    .overlay.open{display:flex}
-    .modal{
-      background:#fff;border-radius:14px;
-      width:440px;max-width:95vw;max-height:85vh;overflow-y:auto;
-      border:2px solid #c7d0e8;
-      box-shadow:0 12px 40px rgba(47,62,117,0.22);
+    /* ━━━ BASE CARD ━━━ */
+    .card {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      box-shadow: var(--shadow);
     }
-    .modal-head{
-      padding:13px 16px;
-      border-bottom:2px solid #c7d0e8;
-      display:flex;align-items:center;justify-content:space-between;
-      background:linear-gradient(90deg,#2f3e75 0%,#3d52a0 100%);
-      border-radius:12px 12px 0 0;
-    }
-    .modal-head h3{font-size:13px;font-weight:700;color:#fff}
-    .mclose{background:none;border:none;font-size:20px;color:#c7d0e8;cursor:pointer;line-height:1;padding:0}
-    .mclose:hover{color:#fff}
-    .modal-body{padding:14px 16px}
 
-    /* ── TREND TABLE alternating ── */
-    .trend-up{color:#166534;font-weight:700}
-    .trend-dn{color:#991b1b;font-weight:700}
-
-    @media(max-width:600px){
-      .topbar{padding:10px 12px}
-      .main{padding:10px 12px}
-      .metrics-row{grid-template-columns:1fr 1fr}
-      .staff-grid{grid-template-columns:1fr}
-      .ca-grid{grid-template-columns:1fr}
+    /* ━━━ CARD HEADER ━━━ */
+    .card-head {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+      background: var(--navy);
     }
-.topbar a.nav-link {
-  font-size: 12px;
-  text-decoration: none;
-  padding: 6px 14px;
-  border-radius: 7px;
-  background: #fff;
-  color: #2f3e75;
-  font-weight: 600;
-  transition: all 0.2s;
-  margin-right: 10px; /* Space before dropdowns */
-}
-.topbar a.nav-link:hover {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
+    .card-head h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -.01em;
+    }
+    .card-head .ch-sub {
+      font-size: 11px;
+      color: rgba(255,255,255,.45);
+    }
+
+    /* ━━━ MONTH ROW ━━━ */
+    .months-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      background: var(--surf2);
+    }
+    .months-lbl {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-right: 4px;
+      flex-shrink: 0;
+    }
+    .chip {
+      display: inline-block;
+      padding: 4px 11px;
+      border-radius: 20px;
+      background: var(--surf);
+      border: 1px solid var(--border2);
+      font-size: 11px;
+      cursor: pointer;
+      color: var(--text2);
+      font-weight: 500;
+      transition: all .14s;
+      user-select: none;
+    }
+    .chip.on {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+      font-weight: 600;
+    }
+    .chip:hover:not(.on) { background: var(--surf3); border-color: var(--navy3); color: var(--navy); }
+    .chip-action {
+      font-family: inherit;
+      font-size: 10px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text3);
+      cursor: pointer;
+      transition: all .14s;
+    }
+    .chip-action:hover { background: var(--surf3); color: var(--text2); border-color: var(--border2); }
+
+    /* ━━━ KPI METRICS ROW ━━━ */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--surf2);
+      border-bottom: 1px solid var(--border);
+    }
+    .mc {
+      background: var(--surf);
+      border-radius: var(--r-sm);
+      padding: 13px 15px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      transition: box-shadow .18s;
+    }
+    .mc:hover { box-shadow: var(--shadow-md); }
+    .mc::after {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, #60a5fa, #818cf8);
+      border-radius: 3px 0 0 3px;
+    }
+    .mc.mc-green::after { background: linear-gradient(180deg,#4ade80,#22c55e); }
+    .mc.mc-red::after   { background: linear-gradient(180deg,#f87171,#ef4444); }
+    .mc.mc-amber::after { background: linear-gradient(180deg,#fbbf24,#f59e0b); }
+    .ml { font-size: 10px; color: var(--text3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
+    .mv { font-size: 22px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .ms { font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+    /* ━━━ TABLES ━━━ */
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead th {
+      background: var(--surf2);
+      color: var(--text3);
+      padding: 9px 13px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 9px 13px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--surf2); }
+
+    /* staff card tighter */
+    .sc table td  { padding: 7px 10px; }
+    .sc table th  { padding: 7px 10px; }
+
+    /* ━━━ PROGRESS BAR ━━━ */
+    .bar-wrap { display: flex; align-items: center; gap: 7px; }
+    .bar-bg {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--surf3);
+      overflow: hidden;
+      min-width: 50px;
+    }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width .4s ease; }
+
+    /* ━━━ BADGES ━━━ */
+    .badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      white-space: nowrap;
+      letter-spacing: .02em;
+      display: inline-block;
+    }
+    .bg { background: var(--red-l);   color: var(--red);   border: 1px solid var(--red-b); }
+    .ba { background: var(--amber-l); color: var(--amber); border: 1px solid var(--amber-b); }
+    .bn { background: var(--green-l); color: var(--green); border: 1px solid var(--green-b); }
+    .bb { background: var(--blue-l);  color: var(--blue);  border: 1px solid var(--blue-b); }
+
+    /* ━━━ TABS ━━━ */
+    .tab-row {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      background: var(--surf2);
+      scrollbar-width: none;
+    }
+    .tab-row::-webkit-scrollbar { display: none; }
+    .tab {
+      padding: 12px 18px;
+      font-size: 12px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      color: var(--text3);
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-weight: 500;
+      transition: all .14s;
+    }
+    .tab.on { border-bottom-color: var(--navy); color: var(--navy); background: var(--surf); font-weight: 600; }
+    .tab:hover:not(.on) { background: var(--surf3); color: var(--text2); }
+    .tp { display: none; }
+    .tp.on { display: block; }
+
+    /* ━━━ STAFF GRID ━━━ */
+    .staff-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 14px;
+      padding: 14px;
+    }
+    .sc {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: box-shadow .2s, transform .15s;
+    }
+    .sc:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .sc-head {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 5px;
+      background: var(--navy);
+    }
+    .sc-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      letter-spacing: .03em;
+    }
+    .doj-tag { font-size: 10px; color: rgba(255,255,255,.45); font-weight: 400; }
+    .doj-yrs { color: #93c5fd; font-weight: 600; }
+
+    /* ━━━ OUTSTANDING SUB-ROWS ━━━ */
+    /* Investment — cool blue */
+    tr.out-inv td {
+      background: #eff6ff !important;
+      border-bottom: 1px dashed #bfdbfe !important;
+    }
+    /* Gold Loan — warm amber */
+    tr.out-gl td {
+      background: #fffbeb !important;
+      border-bottom: 1px dashed #fde68a !important;
+    }
+    /* RD — teal */
+    tr.out-rd td {
+      background: #f0fdfa !important;
+      border-bottom: 1px dashed #99f6e4 !important;
+    }
+    .out-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .out-pip {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .out-label { font-weight: 500; opacity: .8; }
+    .out-amount { font-weight: 700; font-size: 12px; }
+
+    /* ━━━ RANKINGS ━━━ */
+    .rank-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      background: var(--surf);
+      transition: background .13s;
+    }
+    .rank-row:last-child { border-bottom: none; }
+    .rank-row:hover { background: var(--surf2); }
+    .rnum {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--surf3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+      border: 1px solid var(--border2);
+      color: var(--navy2);
+    }
+    .rnum.gold   { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+    .rnum.silver { background: #f1f5f9; color: #64748b; border-color: #cbd5e1; }
+    .rnum.bronze { background: #fef0e6; color: #9a3412; border-color: #fdba74; }
+
+    /* ━━━ SECTION DIVIDERS ━━━ */
+    .sec-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .09em;
+      color: var(--text3);
+      padding: 8px 16px;
+      text-transform: uppercase;
+      background: var(--surf2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .sec-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ━━━ CORRECTIVE ACTION CARDS ━━━ */
+    .ca-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+      gap: 12px;
+      padding: 14px;
+    }
+    .ca-card {
+      border-radius: var(--r);
+      overflow: hidden;
+      border: 1px solid #e4e4e4;
+      box-shadow: var(--shadow);
+      transition: box-shadow .2s;
+    }
+    .ca-card:hover { box-shadow: var(--shadow-md); }
+    .ca-head {
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(0,0,0,.09);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ca-body { padding: 12px 14px; background: var(--surf); font-size: 12px; color: var(--text2); }
+    .ca-stats {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 11px;
+      flex-wrap: wrap;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .step {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      margin-bottom: 7px;
+      padding-bottom: 7px;
+      border-bottom: 1px dashed var(--border);
+    }
+    .step:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .snum {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ━━━ TREND ━━━ */
+    .trend-up { color: var(--green); font-weight: 700; }
+    .trend-dn { color: var(--red);   font-weight: 700; }
+
+    /* ━━━ EMPTY / SPINNER ━━━ */
+    .empty   { padding: 40px; text-align: center; color: var(--text3); font-size: 13px; }
+    .spinner { padding: 50px; text-align: center; color: var(--text3); font-size: 14px; }
+
+    /* ━━━ MODAL ━━━ */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10,16,60,.55);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      backdrop-filter: blur(4px);
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: var(--surf);
+      border-radius: var(--r);
+      width: 460px;
+      max-width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 64px rgba(15,23,80,.28);
+    }
+    .modal-head {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--navy);
+      border-radius: var(--r) var(--r) 0 0;
+    }
+    .modal-head h3 { font-size: 13px; font-weight: 600; color: #fff; }
+    .mclose {
+      background: rgba(255,255,255,.12);
+      border: none;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      color: rgba(255,255,255,.7);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .14s;
+    }
+    .mclose:hover { background: rgba(255,255,255,.22); color: #fff; }
+    .modal-body { padding: 16px 18px; }
+
+    /* ━━━ MODAL OUTSTANDING BLOCK ━━━ */
+    .out-block {
+      margin-top: 12px;
+      padding: 11px 14px;
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid;
+    }
+    .out-block.inv { background: #eff6ff; border-color: #bfdbfe; }
+    .out-block.gl  { background: #fffbeb; border-color: #fde68a; }
+    .out-block.rd  { background: #f0fdfa; border-color: #99f6e4; }
+    .out-icon {
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .inv .out-icon { background: #dbeafe; }
+    .gl  .out-icon { background: #fef3c7; }
+    .rd  .out-icon { background: #ccfbf1; }
+    .out-lbl  { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 2px; }
+    .inv .out-lbl { color: #1e40af; }
+    .gl  .out-lbl { color: #92400e; }
+    .rd  .out-lbl { color: #0f766e; }
+    .out-val  { font-size: 17px; font-weight: 700; }
+    .inv .out-val { color: #1e40af; }
+    .gl  .out-val  { color: #92400e; }
+    .rd  .out-val  { color: #0f766e; }
+
+    /* ━━━ REVIEWED BAR ━━━ */
+    #reviewedBar {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 300;
+      background: var(--navy);
+      padding: 11px 18px;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 -3px 14px rgba(15,23,80,.22);
+      flex-wrap: wrap;
+      gap: 8px;
+      border-top: 1px solid rgba(255,255,255,.1);
+    }
+    #reviewedBtn {
+      padding: 8px 20px;
+      background: #22c55e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity .15s;
+    }
+    #reviewedBtn:hover { opacity: .88; }
+
+    /* ━━━ RESPONSIVE ━━━ */
+    @media (max-width: 640px) {
+      .topbar { padding: 0 12px; height: 50px; gap: 7px; }
+      .topbar h1 { font-size: 13px; }
+      .main { padding: 10px 12px; gap: 10px; }
+      .metrics-row { grid-template-columns: 1fr 1fr; gap: 9px; padding: 11px 13px; }
+      .staff-grid { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+      .ca-grid { grid-template-columns: 1fr; padding: 10px; }
+      .tab { padding: 10px 13px; font-size: 11px; }
+    }
   </style>
 </head>
 <body>
 
+<!-- ━━━ TOPBAR ━━━ -->
 <div class="topbar">
-  <h1>📊 Branch Review Dashboard</h1>
+  <h1>Branch Review Dashboard</h1>
   <a href="staff_dashboard.html" class="nav-link">Staff Productivity</a>
   <span id="adminReportLink" style="display:none">
-    <a href="admin_report.html" class="nav-link" style="background:#fef3c7;color:#92400e">📋 Admin Report</a>
+    <a href="admin_report.html" class="nav-link admin-link">📋 Admin Report</a>
+    <a href="#" onclick="openSNLReview();return false;" class="nav-link admin-link">🏢 SNL Review</a>
   </span>
   <select id="branchSel" onchange="onBranch()" style="display:none"></select>
   <select id="modeSel" onchange="onMode()">
@@ -245,13 +684,13 @@
     <option value="single">Individual</option>
   </select>
   <select id="staffSel" style="display:none" onchange="render()"></select>
-  <span id="userInfo" style="font-size:11px;color:#c7d0e8;margin-left:4px"></span>
-  <button onclick="doExport()">⬇ Export</button>
-  <button onclick="doLogout()" style="background:rgba(255,255,255,0.15);color:#fff">Logout</button>
+  <span id="userInfo"></span>
+  <button class="tb-btn" onclick="doExport()">↓ Export</button>
+  <button class="tb-btn danger" onclick="doLogout()">Logout</button>
 </div>
 
 <div class="main" id="mainArea">
-  <div class="spinner" id="loader">⏳ Connecting to Google Sheets...</div>
+  <div class="spinner" id="loader">⏳ Connecting to Google Sheets…</div>
 </div>
 
 <div class="overlay" id="overlay" onclick="maybeClose(event)">
@@ -265,17 +704,39 @@
 </div>
 
 <script>
+/* ── SSO SEED ──
+   When this page is opened from another SML dashboard via openSNLReview(),
+   it arrives with ?sso=1&brToken=...&brRole=... in the URL.
+   Seed localStorage from those params before the SESSION check below runs,
+   so the user lands directly on the dashboard without seeing the login page.
+   The params are then stripped from the URL for cleanliness.
+*/
+(function() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get("sso") === "1") {
+    ["brToken","brRole","brBranch","brName","brEmpId","brLoginDate"].forEach(k => {
+      const v = p.get(k);
+      if (v) localStorage.setItem(k, v);
+    });
+    // Clean the URL — replace the current history entry without the params
+    const clean = window.location.pathname;
+    window.history.replaceState(null, "", clean);
+  }SNL
+})();
+
 const API      = "https://script.google.com/macros/s/AKfycbzy_um_SLPLkZAEvEjYGKR8N3QYXORaRJBe9_soQSUWhTY1sAhSYev3hWtywxFE3mvQtw/exec";
 const AUTH_URL = "https://script.google.com/macros/s/AKfycbzTPB10fdiNYo2mRF_pIsUuPfOhFW02_omSZYCPhPq_ybtVYqz5HWrbB7ia7C4lb5j7-g/exec";
+
 
 const MONTHS = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 const PLABEL = {
-  Investment : "Investment",
-  RD         : "Recurring Deposit",
-  GoldLoan   : "Gold Loan",
-  SOLAR      : "Solar",
-  Visit      : "Visit"
+  Investment:   "Investment",
+  RD:           "Recurring Deposit",
+  GoldLoan:     "Gold Loan",
+  BusinessLoan: "Business Loan",
+  SOLAR:        "Solar",
+  Visit:        "Visit"
 };
 
 const STEPS = {
@@ -297,6 +758,12 @@ const STEPS = {
     "Reduce appraisal wait time — fast-track process for repeat customers",
     "Follow up with lapsed gold loan customers for renewals"
   ],
+  BusinessLoan: [
+    "Identify MSME clusters in the catchment area",
+    "Attend local trade association events for referral leads",
+    "Push pending business loan files to disbursement stage",
+    "Cross-sell to current account & overdraft customers"
+  ],
   SOLAR: [
     "Partner with local solar dealers for inbound referral leads",
     "Target agriculture & rural customers under solar schemes",
@@ -311,7 +778,14 @@ const STEPS = {
   ]
 };
 
-// ── SESSION ──────────────────────────────────────────────────
+/* ── outstanding display config — Investment, GoldLoan, RD all treated the same way ── */
+const OUT_CFG = {
+  Investment: { rowCls: "out-inv", pip: "#3b82f6", label: "Outstanding",      blockCls: "inv", icon: "📈" },
+  GoldLoan:   { rowCls: "out-gl",  pip: "#f59e0b", label: "Outstanding",      blockCls: "gl",  icon: "🏅" },
+  RD:         { rowCls: "out-rd",  pip: "#14b8a6", label: "RD Outstanding",   blockCls: "rd",  icon: "🔄" }
+};
+
+// ── SESSION ──
 const SESSION_TOKEN  = localStorage.getItem("brToken");
 const SESSION_ROLE   = localStorage.getItem("brRole");
 const SESSION_BRANCH = localStorage.getItem("brBranch");
@@ -324,60 +798,36 @@ function todayStr() {
   return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
 }
 
-// Auth guard — redirect to login if no valid session
 if (!SESSION_TOKEN || SESSION_DATE !== todayStr()) {
   window.location.href = "login.html";
 }
 
-
 let selMonths = new Set(["Apr"]);
 let branch = null;
+let allData = [];
 
-/* ── SETUP UI FOR ROLE ── */
 function setupRoleUI() {
-  // User info label
   document.getElementById("userInfo").textContent =
-    SESSION_NAME + (SESSION_ROLE === "staff" ? " (Staff)" : SESSION_ROLE === "branch" ? " (Branch)" : " (Admin)");
-
-  // Admin-only elements
+    SESSION_NAME + (SESSION_ROLE==="staff" ? " (Staff)" : SESSION_ROLE==="branch" ? " (Branch)" : " (Admin)");
   if (SESSION_ROLE === "admin") {
     document.getElementById("branchSel").style.display = "inline-block";
     document.getElementById("adminReportLink").style.display = "inline";
   }
-
-  // Staff reviewed bar
   if (SESSION_ROLE === "staff") {
-    document.getElementById("reviewedBar").style.display = "flex";
-    // Add bottom padding so content isn't hidden behind bar
+    const bar = document.getElementById("reviewedBar");
+    bar.style.display = "flex";
     document.querySelector(".main").style.paddingBottom = "70px";
   }
 }
 
-/* ── LOAD ── */
-/* ── LOAD ── */
 async function load() {
   try {
-    const url = API + "?token=" + encodeURIComponent(SESSION_TOKEN);
-    console.log("Diagnostic target fetch URL:", url);
-    
-    const r = await fetch(url);
+    const r = await fetch(API + "?token=" + encodeURIComponent(SESSION_TOKEN));
     const j = await r.json();
-
-    // INTERCEPT SECURITY KICKOUT TO READ EVIDENCE
-    if (j.error === "unauthorized") {
-      alert("🛑 UNAUTHORIZED REJECTION DETECTED!\n\n" +
-            "Server Message: " + (j.reason || "None") + "\n\n" +
-            "Diagnostic Matrix:\n" + JSON.stringify(j.diagnostics, null, 2));
-      
-      console.error("Full Forensic Object:", j);
-      return; // Freezes the execution thread here so it doesn't run doLogout()
-    }
-
+    if (j.error === "unauthorized") { doLogout(); return; }
     allData = j.branches;
     setupRoleUI();
-
     if (SESSION_ROLE === "admin") {
-      // Admin sees branch selector with all branches
       const sel = document.getElementById("branchSel");
       allData.forEach((b, i) => {
         const o = document.createElement("option");
@@ -385,14 +835,10 @@ async function load() {
         sel.appendChild(o);
       });
     } else {
-      // Branch / staff — locked to their branch, no selector shown
-      // allData is already filtered by GAS to their branch only
-      // but we also filter client-side as a safety net
       allData = allData.filter(b =>
         b.branchName.trim().toLowerCase() === SESSION_BRANCH.trim().toLowerCase()
       );
     }
-
     buildShell();
     onBranch();
   } catch(e) {
@@ -405,7 +851,6 @@ function onBranch() {
   const i   = SESSION_ROLE === "admin" ? (sel.value || 0) : 0;
   branch    = allData[i];
   if (!branch) return;
-
   const ss = document.getElementById("staffSel");
   ss.innerHTML = "";
   (branch.staff || []).forEach(s => {
@@ -416,70 +861,52 @@ function onBranch() {
   render();
 }
 
-/* ── LOGOUT ── */
-function doLogout() {
-  localStorage.clear();
-  window.location.href = "login.html";
+function doLogout() { localStorage.clear(); window.location.href = "login.html"; }
+
+function openSNLReview() {
+  // Pass current session to snlreview.netlify.app via URL params.
+  // The SNL site seeds its own localStorage from these params on load, bypassing its login page.
+  const p = new URLSearchParams({
+    brToken:     localStorage.getItem("brToken")     || "",
+    brRole:      localStorage.getItem("brRole")      || "",
+    brBranch:    localStorage.getItem("brBranch")    || "",
+    brName:      localStorage.getItem("brName")      || "",
+    brEmpId:     localStorage.getItem("brEmpId")     || "",
+    brLoginDate: localStorage.getItem("brLoginDate") || ""
+  });
+  window.open("https://snlreview.netlify.app/?sso=1&" + p.toString(), "_blank");
 }
 
-/* ── MARK REVIEWED (staff only) ── */
 async function markReviewed() {
   const btn = document.getElementById("reviewedBtn");
   const msg = document.getElementById("reviewedMsg");
-  btn.disabled = true;
-  btn.textContent = "Saving...";
-
+  btn.disabled = true; btn.textContent = "Saving…";
   try {
-    const res = await fetch(AUTH_URL, {
-      method  : "POST",
-      headers : { "Content-Type": "application/json" },
-      body    : JSON.stringify({ action: "markReviewed", token: SESSION_TOKEN })
-    });
+    const res  = await fetch(AUTH_URL, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"markReviewed",token:SESSION_TOKEN}) });
     const data = await res.json();
-
     if (data.ok) {
-      btn.textContent       = "✓ Reviewed";
-      btn.style.background  = "#166534";
-      btn.disabled          = true;
-      msg.textContent       = data.alreadyMarked
-        ? "✅ Already marked as reviewed today."
-        : "✅ Marked as reviewed for today. Thank you!";
+      btn.textContent = "✓ Reviewed"; btn.style.background = "#16a34a"; btn.disabled = true;
+      msg.textContent = data.alreadyMarked ? "✅ Already marked as reviewed today." : "✅ Marked as reviewed for today. Thank you!";
     } else {
-      btn.disabled    = false;
-      btn.textContent = "✓ Mark as Reviewed";
+      btn.disabled = false; btn.textContent = "✓ Mark as Reviewed";
       alert(data.error || "Could not save. Try again.");
     }
-  } catch(e) {
-    btn.disabled    = false;
-    btn.textContent = "✓ Mark as Reviewed";
-    alert("Network error. Please try again.");
-  }
+  } catch(e) { btn.disabled = false; btn.textContent = "✓ Mark as Reviewed"; alert("Network error. Please try again."); }
 }
 
-// Check if already reviewed today on load (staff only)
 async function checkReviewedStatus() {
   if (SESSION_ROLE !== "staff") return;
   try {
-    const res = await fetch(AUTH_URL, {
-      method  : "POST",
-      headers : { "Content-Type": "application/json" },
-      body    : JSON.stringify({ action: "markReviewed", token: SESSION_TOKEN })
-    });
-    // We only pre-check — don't actually mark, just see if already done
-    // Instead validate token and check log via a read-only approach
-    // The markReviewed endpoint returns alreadyMarked:true without double-writing
-    // because the GAS checks before appending
+    const res  = await fetch(AUTH_URL, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"markReviewed",token:SESSION_TOKEN}) });
     const data = await res.json();
     if (data.ok && data.alreadyMarked) {
       document.getElementById("reviewedBtn").textContent      = "✓ Reviewed";
-      document.getElementById("reviewedBtn").style.background = "#166534";
+      document.getElementById("reviewedBtn").style.background = "#16a34a";
       document.getElementById("reviewedBtn").disabled         = true;
       document.getElementById("reviewedMsg").textContent      = "✅ Already marked as reviewed today.";
     }
   } catch(e) {}
 }
-
-
 
 function getMonths() { return MONTHS.filter(m => selMonths.has(m)); }
 
@@ -491,10 +918,12 @@ function getStaff() {
   return list;
 }
 
-/* ── CALC ── */
-// Always aggregates achievement over selected months.
-// Target = monthlyTarget × number of selected months (correct for multi-month).
-// monthlyTargetTotal (annual) is NOT used here — BL branch target handled separately in renderSnap.
+function onMode() {
+  const m = document.getElementById("modeSel").value;
+  document.getElementById("staffSel").style.display = m === "single" ? "inline-block" : "none";
+  render();
+}
+
 function calc(metric, months) {
   let ach = 0;
   months.forEach(m => ach += (metric.monthlyAchievement[m] || 0));
@@ -503,7 +932,7 @@ function calc(metric, months) {
   return { ach, tgt, pct, gap: ach - tgt };
 }
 
-function pc(p) { return p >= 100 ? "#166534" : p >= 75 ? "#92400e" : "#991b1b"; }
+function pc(p) { return p >= 100 ? "#16a34a" : p >= 75 ? "#d97706" : "#dc2626"; }
 function bc(p) { return p >= 100 ? "bn" : p >= 75 ? "ba" : "bg"; }
 
 function fmt(n) {
@@ -513,6 +942,10 @@ function fmt(n) {
   if (a >= 100000)   return s + (a/100000).toFixed(1) + "L";
   if (a >= 1000)     return s + (a/1000).toFixed(1) + "K";
   return n.toLocaleString();
+}
+
+function initials(name) {
+  return (name || "").trim().split(/\s+/).slice(0,2).map(w => w[0]?.toUpperCase() || "").join("");
 }
 
 /* ── SHELL ── */
@@ -539,7 +972,7 @@ function buildShell() {
 
 function buildMonthRow() {
   const row = document.getElementById("mrow");
-  row.innerHTML = `<span style="font-size:11px;color:#888;margin-right:6px;flex-shrink:0;font-weight:600">MONTHS:</span>`;
+  row.innerHTML = `<span class="months-lbl">Months</span>`;
   MONTHS.forEach(m => {
     const c = document.createElement("span");
     c.className = "chip" + (selMonths.has(m) ? " on" : "");
@@ -552,11 +985,11 @@ function buildMonthRow() {
     row.appendChild(c);
   });
   const ab = document.createElement("button");
-  ab.textContent = "All"; ab.style = "font-size:10px;padding:3px 9px;margin-left:6px";
+  ab.className = "chip-action"; ab.textContent = "All"; ab.style.marginLeft = "6px";
   ab.onclick = () => { MONTHS.forEach(m => selMonths.add(m)); buildMonthRow(); render(); };
   row.appendChild(ab);
   const cb = document.createElement("button");
-  cb.textContent = "Clear"; cb.style = "font-size:10px;padding:3px 9px;margin-left:3px";
+  cb.className = "chip-action"; cb.textContent = "Clear"; cb.style.marginLeft = "3px";
   cb.onclick = () => {
     const first = selMonths.values().next().value;
     selMonths.clear(); selMonths.add(first);
@@ -587,37 +1020,39 @@ function render() {
 /* ── SNAPSHOT ── */
 function renderSnap(staff, months) {
   let totals = {};
-
   staff.forEach(s => {
     for (let k in s.metrics) {
       if (!totals[k]) totals[k] = { tgt: 0, ach: 0 };
       const metric = s.metrics[k];
       months.forEach(m => { totals[k].ach += (metric.monthlyAchievement[m] || 0); });
-      totals[k].tgt += (metric.monthlyTarget || 0) * months.length;
+      if (k !== "BusinessLoan") { totals[k].tgt += (metric.monthlyTarget || 0) * months.length; }
     }
   });
+  if (totals["BusinessLoan"]) {
+    const blMonthly = branch.blBranchMonthlyTarget || 0;
+    const blAnnual  = branch.blBranchTotalTarget   || 0;
+    totals["BusinessLoan"].tgt = blAnnual > 0 ? blAnnual : (blMonthly * months.length);
+  }
 
   const realStaff  = staff.filter(s => s.name.toUpperCase() !== "TOTAL");
   const staffCount = realStaff.length;
   let onTgt = 0, belowProd = 0;
-
   realStaff.forEach(s => {
     let sa = 0, st = 0;
     for (let k in s.metrics) {
+      if (k === "BusinessLoan") continue;
       const metric = s.metrics[k];
       months.forEach(m => { sa += (metric.monthlyAchievement[m] || 0); });
       st += (metric.monthlyTarget || 0) * months.length;
     }
     if (st > 0 && sa >= st) onTgt++;
   });
-
   for (let k in totals) {
     const p = totals[k].tgt > 0 ? Math.round(totals[k].ach / totals[k].tgt * 100) : 100;
     if (p < 100) belowProd++;
   }
 
   const mlist = [...selMonths].sort((a,b) => MONTHS.indexOf(a) - MONTHS.indexOf(b)).join(", ");
-
   let rows = "";
   for (let k in totals) {
     const p = totals[k].tgt > 0 ? Math.round(totals[k].ach / totals[k].tgt * 100) : 0;
@@ -630,28 +1065,46 @@ function renderSnap(staff, months) {
         <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(p,100)}%;background:${pc(p)}"></div></div>
         <span class="badge ${bc(p)}" style="min-width:38px;text-align:center">${p}%</span>
       </div></td>
-      <td style="color:${g<0?"#991b1b":"#166534"};font-weight:700">${g>=0?"+":""}${fmt(g)}</td>
+      <td style="color:${g<0?"#dc2626":"#16a34a"};font-weight:700">${g>=0?"+":""}${fmt(g)}</td>
     </tr>`;
   }
 
-  // 3. Update the HTML output to use staffCount (around line 285 in your index.html)
-  // Ensure the KPI card displays: ${onTgt} / ${staffCount}
+  const blPct = totals["BusinessLoan"] ? Math.round(totals["BusinessLoan"].ach/(totals["BusinessLoan"].tgt||1)*100) : 0;
 
   document.getElementById("snap").innerHTML = `
     <div class="card">
       <div class="card-head">
         <h2>🏢 Branch Snapshot — ${branch.branchName}</h2>
-        <span style="font-size:11px;color:#c7d0e8">${mlist}</span>
+        <span class="ch-sub">${mlist}</span>
       </div>
       <div class="metrics-row">
-        <div class="mc"><div class="ml">Staff On Target</div><div class="mv" style="color:${onTgt===staffCount?"#166534":"#991b1b"}">${onTgt} / ${staffCount}</div><div class="ms">staff members</div></div>
-        <div class="mc"><div class="ml">Products Below Target</div><div class="mv" style="color:${belowProd===0?"#166534":"#991b1b"}">${belowProd}</div><div class="ms">of ${Object.keys(totals).length} products</div></div>
-        <div class="mc"><div class="ml">Period</div><div class="mv" style="font-size:13px">${months.length}</div><div class="ms">${months.length===1?"month selected":"months selected"}</div></div>
+        <div class="mc ${onTgt===staffCount?"mc-green":"mc-red"}">
+          <div class="ml">Staff on Target</div>
+          <div class="mv" style="color:${onTgt===staffCount?"#16a34a":"#dc2626"}">${onTgt} / ${staffCount}</div>
+          <div class="ms">team members</div>
+        </div>
+        <div class="mc ${belowProd===0?"mc-green":"mc-amber"}">
+          <div class="ml">Products Below Target</div>
+          <div class="mv" style="color:${belowProd===0?"#16a34a":"#d97706"}">${belowProd}</div>
+          <div class="ms">of ${Object.keys(totals).length} products</div>
+        </div>
+        <div class="mc ${blPct>=100?"mc-green":blPct>=75?"mc-amber":"mc-red"}">
+          <div class="ml">Business Loan</div>
+          <div class="mv" style="color:${pc(blPct)}">${blPct}%</div>
+          <div class="ms">branch target</div>
+        </div>
+        <div class="mc">
+          <div class="ml">Period</div>
+          <div class="mv" style="font-size:18px">${months.length}</div>
+          <div class="ms">${months.length===1?"month selected":"months selected"}</div>
+        </div>
       </div>
-      <table>
-        <thead><tr><th>Product</th><th>Target</th><th>Achievement</th><th>Progress</th><th>Gap</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Product</th><th>Target</th><th>Achievement</th><th>Progress</th><th>Gap</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
     </div>`;
 }
 
@@ -665,22 +1118,44 @@ function renderStaff(staff, months) {
     for (let k in s.metrics) {
       const r      = calc(s.metrics[k], months);
       const metric = s.metrics[k];
-      sa += r.ach; st += r.tgt;
-      const gap = r.gap;
-      rows += `<tr>
-        <td style="color:#555">${PLABEL[k]||k}</td>
-        <td>${fmt(r.tgt)}</td>
-        <td style="cursor:pointer;color:#1d4ed8;text-decoration:underline"
-            onclick='openBreak(${JSON.stringify(s.name)},${JSON.stringify(k)},${JSON.stringify(metric)})'>${fmt(r.ach)}</td>
-        <td><span class="badge ${bc(r.pct)}">${r.pct}%</span></td>
-        <td style="color:${gap<0?"#991b1b":"#166534"};font-weight:700">${gap>=0?"+":""}${fmt(gap)}</td>
-      </tr>`;
-      // Outstanding sub-row — Investment, GoldLoan, RD
-      if ((k === "Investment" || k === "GoldLoan" || k === "RD") && metric.outstanding !== null && metric.outstanding !== undefined) {
-        rows += `<tr style="background:#fffbeb">
-          <td style="color:#92400e;font-size:11px;padding-left:20px">↳ Outstanding</td>
-          <td colspan="4" style="color:#92400e;font-weight:600;font-size:11px">${fmt(metric.outstanding)}</td>
+
+      if (k === "BusinessLoan") {
+        sa += r.ach;
+        rows += `<tr>
+          <td style="color:var(--text2)">${PLABEL[k]||k}</td>
+          <td style="color:var(--text3);font-style:italic;font-size:11px">Branch target</td>
+          <td style="cursor:pointer;color:#1d4ed8;text-decoration:underline"
+              onclick='openBreak(${JSON.stringify(s.name)},${JSON.stringify(k)},${JSON.stringify(metric)})'>${fmt(r.ach)}</td>
+          <td>—</td>
+          <td>—</td>
         </tr>`;
+      } else {
+        sa += r.ach; st += r.tgt;
+        const gap = r.gap;
+        rows += `<tr>
+          <td style="color:var(--text2)">${PLABEL[k]||k}</td>
+          <td>${fmt(r.tgt)}</td>
+          <td style="cursor:pointer;color:#1d4ed8;text-decoration:underline"
+              onclick='openBreak(${JSON.stringify(s.name)},${JSON.stringify(k)},${JSON.stringify(metric)})'>${fmt(r.ach)}</td>
+          <td><span class="badge ${bc(r.pct)}">${r.pct}%</span></td>
+          <td style="color:${gap<0?"#dc2626":"#16a34a"};font-weight:700">${gap>=0?"+":""}${fmt(gap)}</td>
+        </tr>`;
+
+        /* ━━━ OUTSTANDING SUB-ROW — Investment, GoldLoan AND RD ━━━ */
+        if (OUT_CFG[k] && metric.outstanding !== null && metric.outstanding !== undefined) {
+          const cfg = OUT_CFG[k];
+          rows += `<tr class="${cfg.rowCls}">
+            <td colspan="2" style="padding-left:22px">
+              <span class="out-cell">
+                <span class="out-pip" style="background:${cfg.pip}"></span>
+                <span class="out-label">↳ ${cfg.label}</span>
+              </span>
+            </td>
+            <td colspan="3">
+              <span class="out-amount" style="color:${cfg.pip}">${fmt(metric.outstanding)}</span>
+            </td>
+          </tr>`;
+        }
       }
     }
     const op = st > 0 ? Math.round(sa / st * 100) : 0;
@@ -688,15 +1163,17 @@ function renderStaff(staff, months) {
     if (s.doj) {
       const parts   = s.doj.split("-");
       const dojDate = new Date(`${parts[1]} ${parts[0]} ${parts[2]}`);
-      const yrs     = (Date.now() - dojDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-      const display = yrs < 1 ? `${Math.round(yrs * 12)}m` : `${yrs.toFixed(1)}y`;
-      dojBadge = `<span style="font-size:10px;color:#c7d0e8;font-weight:400;margin-left:6px">DOJ: ${s.doj} <span style="color:#93c5fd;font-weight:700">(${display})</span></span>`;
+      const diffMs  = Date.now() - dojDate.getTime();
+      const yrs     = diffMs / (1000 * 60 * 60 * 24 * 365.25);
+      const display = yrs < 1 ? `${Math.round(yrs*12)}m` : `${yrs.toFixed(1)}y`;
+      dojBadge = `<span class="doj-tag"> · DOJ: ${s.doj} <span class="doj-yrs">(${display})</span></span>`;
     }
     html += `<div class="sc">
       <div class="sc-head">
-        <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap">
-          <span class="sc-name">👤 ${s.name}</span>${dojBadge}
-        </div>
+        <span class="sc-name">
+          <span class="avatar">${initials(s.name)}</span>
+          <span>${s.name}${dojBadge}</span>
+        </span>
         <span class="badge ${bc(op)}">${op}% — ${mLabel}</span>
       </div>
       <table>
@@ -712,51 +1189,69 @@ function renderStaff(staff, months) {
 /* ── RANKINGS TAB ── */
 function renderRank(staff, months) {
   if (!staff.length) { document.getElementById("tp-rank").innerHTML = `<div class="empty">No data.</div>`; return; }
-  // Overall ranking excludes BL (no individual target)
   const scores = staff.map(s => {
     let a = 0, t = 0;
     for (let k in s.metrics) {
       if (k === "BusinessLoan") continue;
       const r = calc(s.metrics[k], months); a += r.ach; t += r.tgt;
     }
-    return { name: s.name, ach: a, tgt: t, pct: t > 0 ? Math.round(a / t * 100) : 0 };
-  }).sort((a, b) => b.pct - a.pct);
+    return { name: s.name, ach: a, tgt: t, pct: t > 0 ? Math.round(a/t*100) : 0 };
+  }).sort((a,b) => b.pct - a.pct);
 
-  const medals = ["#f59e0b","#94a3b8","#b45309"];
-  let html = `<div class="sec-label">🏆 Overall Ranking</div>`;
-  scores.forEach((s, i) => {
-    const mbg = i < 3 ? medals[i] : "";
+  const rnCls = ["gold","silver","bronze"];
+  let html = `<div class="sec-label"><span class="sec-dot" style="background:#f59e0b"></span>🏆 Overall Ranking</div>`;
+  scores.forEach((s,i) => {
     html += `<div class="rank-row">
-      <div class="rnum" style="${mbg ? "background:"+mbg+";color:#fff;border-color:"+mbg : ""}">${i+1}</div>
+      <div class="rnum ${rnCls[i]||""}">${i+1}</div>
       <div style="flex:1;font-weight:600;font-size:12px">${s.name}</div>
       <div class="bar-wrap" style="width:140px">
         <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(s.pct,100)}%;background:${pc(s.pct)}"></div></div>
       </div>
       <span class="badge ${bc(s.pct)}" style="min-width:38px;text-align:center">${s.pct}%</span>
-      <span style="font-size:11px;color:#888;min-width:52px;text-align:right">${fmt(s.ach)}</span>
+      <span style="font-size:11px;color:var(--text3);min-width:52px;text-align:right">${fmt(s.ach)}</span>
     </div>`;
   });
 
   const products = Object.keys(staff[0]?.metrics || {});
   products.forEach(p => {
-    html += `<div class="sec-label">${PLABEL[p]||p}</div>`;
-    const ps = staff.map(s => {
-      const r = s.metrics[p] ? calc(s.metrics[p], months) : {ach:0,tgt:0,pct:0,gap:0};
-      return { name: s.name, ...r };
-    }).sort((a, b) => b.pct - a.pct);
-    ps.forEach((s, i) => {
-      html += `<div class="rank-row">
-        <div class="rnum">${i+1}</div>
-        <div style="flex:1;font-size:12px">${s.name}</div>
-        <div class="bar-wrap" style="width:140px">
-          <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(s.pct,100)}%;background:${pc(s.pct)}"></div></div>
-        </div>
-        <span class="badge ${bc(s.pct)}" style="min-width:38px;text-align:center">${s.pct}%</span>
-        <span style="font-size:11px;color:#888;min-width:52px;text-align:right">${fmt(s.ach)}</span>
-      </div>`;
-    });
+    html += `<div class="sec-label"><span class="sec-dot" style="background:var(--navy3)"></span>${PLABEL[p]||p}</div>`;
+    if (p === "BusinessLoan") {
+      const ps = staff.map(s => {
+        let ach = 0;
+        if (s.metrics[p]) months.forEach(m => ach += (s.metrics[p].monthlyAchievement[m] || 0));
+        return { name: s.name, ach };
+      }).sort((a,b) => b.ach - a.ach);
+      const maxAch = ps[0]?.ach || 1;
+      ps.forEach((s,i) => {
+        const barW = Math.round(s.ach / maxAch * 100);
+        html += `<div class="rank-row">
+          <div class="rnum ${rnCls[i]||""}">${i+1}</div>
+          <div style="flex:1;font-size:12px">${s.name}</div>
+          <div class="bar-wrap" style="width:140px">
+            <div class="bar-bg"><div class="bar-fill" style="width:${barW}%;background:#3b82f6"></div></div>
+          </div>
+          <span class="badge bb" style="min-width:38px;text-align:center">${fmt(s.ach)}</span>
+          <span style="font-size:10px;color:var(--text3);min-width:52px;text-align:right">no indiv. target</span>
+        </div>`;
+      });
+    } else {
+      const ps = staff.map(s => {
+        const r = s.metrics[p] ? calc(s.metrics[p], months) : {ach:0,tgt:0,pct:0,gap:0};
+        return { name: s.name, ...r };
+      }).sort((a,b) => b.pct - a.pct);
+      ps.forEach((s,i) => {
+        html += `<div class="rank-row">
+          <div class="rnum ${rnCls[i]||""}">${i+1}</div>
+          <div style="flex:1;font-size:12px">${s.name}</div>
+          <div class="bar-wrap" style="width:140px">
+            <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(s.pct,100)}%;background:${pc(s.pct)}"></div></div>
+          </div>
+          <span class="badge ${bc(s.pct)}" style="min-width:38px;text-align:center">${s.pct}%</span>
+          <span style="font-size:11px;color:var(--text3);min-width:52px;text-align:right">${fmt(s.ach)}</span>
+        </div>`;
+      });
+    }
   });
-
   document.getElementById("tp-rank").innerHTML = html;
 }
 
@@ -765,33 +1260,31 @@ function renderCorrective(staff, months) {
   let actions = [];
   staff.forEach(s => {
     for (let k in s.metrics) {
+      if (k === "BusinessLoan") continue;
       const r = calc(s.metrics[k], months);
       if (r.pct < 100) actions.push({ staff: s.name, product: k, pct: r.pct, ach: r.ach, tgt: r.tgt, gap: r.gap });
     }
   });
-
-  actions.sort((a, b) => a.pct - b.pct);
-
+  if (branch.blBranchMonthlyTarget || branch.blBranchTotalTarget) {
+    const blTgt = branch.blBranchTotalTarget > 0 ? branch.blBranchTotalTarget : (branch.blBranchMonthlyTarget * months.length);
+    let blAch = 0;
+    staff.forEach(s => { if (s.metrics["BusinessLoan"]) months.forEach(m => blAch += (s.metrics["BusinessLoan"].monthlyAchievement[m]||0)); });
+    const blPct = blTgt > 0 ? Math.round(blAch/blTgt*100) : 0;
+    if (blPct < 100) actions.push({ staff:"BRANCH (Business Loan)", product:"BusinessLoan", pct:blPct, ach:blAch, tgt:blTgt, gap:blAch-blTgt });
+  }
+  actions.sort((a,b) => a.pct - b.pct);
   if (!actions.length) {
     document.getElementById("tp-corrective").innerHTML = `<div class="empty">✅ All staff on target — outstanding performance!</div>`;
     return;
   }
-
   const crit = actions.filter(a => a.pct < 50);
   const risk = actions.filter(a => a.pct >= 50 && a.pct < 75);
   const near = actions.filter(a => a.pct >= 75 && a.pct < 100);
 
   function caCard(a, bg, tc, bc2) {
-    const steps = STEPS[a.product] || [
-      "Deep-dive review of pipeline with staff member",
-      "Set daily activity targets to close the gap",
-      "Monitor progress every 3 days",
-      "Escalate to manager if no improvement in 7 days"
-    ];
+    const steps = STEPS[a.product] || ["Deep-dive review of pipeline with staff member","Set daily activity targets to close the gap","Monitor progress every 3 days","Escalate to manager if no improvement in 7 days"];
     const label = PLABEL[a.product] || a.product;
-    const stepsHTML = steps.map((st, i) =>
-      `<div class="step"><div class="snum">${i+1}</div><div>${st}</div></div>`
-    ).join("");
+    const stepsHTML = steps.map((st,i) => `<div class="step"><div class="snum">${i+1}</div><div>${st}</div></div>`).join("");
     return `<div class="ca-card" style="border-color:${bc2}">
       <div class="ca-head" style="background:${bg};color:${tc};border-bottom-color:${bc2}">
         <span>${a.staff} — ${label}</span>
@@ -810,21 +1303,17 @@ function renderCorrective(staff, months) {
 
   let html = "";
   if (crit.length) {
-    html += `<div class="sec-label" style="color:#991b1b">🔴 Critical — Below 50% (${crit.length} items)</div><div class="ca-grid">`;
-    crit.forEach(a => html += caCard(a, "#fee2e2", "#991b1b", "#fca5a5"));
-    html += `</div>`;
+    html += `<div class="sec-label"><span class="sec-dot" style="background:#dc2626"></span>🔴 Critical — Below 50% (${crit.length} items)</div><div class="ca-grid">`;
+    crit.forEach(a => html += caCard(a,"#fee2e2","#991b1b","#fca5a5")); html += `</div>`;
   }
   if (risk.length) {
-    html += `<div class="sec-label" style="color:#92400e">🟡 At Risk — 50–75% (${risk.length} items)</div><div class="ca-grid">`;
-    risk.forEach(a => html += caCard(a, "#fef3c7", "#92400e", "#fcd34d"));
-    html += `</div>`;
+    html += `<div class="sec-label"><span class="sec-dot" style="background:#d97706"></span>🟡 At Risk — 50–75% (${risk.length} items)</div><div class="ca-grid">`;
+    risk.forEach(a => html += caCard(a,"#fef3c7","#92400e","#fcd34d")); html += `</div>`;
   }
   if (near.length) {
-    html += `<div class="sec-label" style="color:#166534">🟢 Near Target — 75–99% (${near.length} items)</div><div class="ca-grid">`;
-    near.forEach(a => html += caCard(a, "#dcfce7", "#166534", "#86efac"));
-    html += `</div>`;
+    html += `<div class="sec-label"><span class="sec-dot" style="background:#16a34a"></span>🟢 Near Target — 75–99% (${near.length} items)</div><div class="ca-grid">`;
+    near.forEach(a => html += caCard(a,"#dcfce7","#166534","#86efac")); html += `</div>`;
   }
-
   document.getElementById("tp-corrective").innerHTML = html;
 }
 
@@ -832,102 +1321,88 @@ function renderCorrective(staff, months) {
 function renderTrend(staff, months) {
   if (!staff.length) { document.getElementById("tp-trend").innerHTML = `<div class="empty">No data.</div>`; return; }
   let html = "";
-
   staff.forEach(s => {
     const products = Object.keys(s.metrics || {});
     if (!products.length) return;
-
-    html += `<div class="sec-label">👤 ${s.name}</div>`;
-    html += `<div style="overflow-x:auto"><table><thead><tr>
-      <th>Product</th>`;
-    MONTHS.forEach(m => html += `<th style="${selMonths.has(m) ? "border-bottom:3px solid #93c5fd" : "opacity:0.45"}">${m}</th>`);
+    html += `<div class="sec-label"><span class="sec-dot" style="background:var(--navy)"></span>👤 ${s.name}</div>`;
+    html += `<div style="overflow-x:auto"><table><thead><tr><th>Product</th>`;
+    MONTHS.forEach(m => html += `<th style="${selMonths.has(m) ? "border-bottom:2px solid #3b82f6" : "opacity:0.4"}">${m}</th>`);
     html += `<th>Selected Total</th></tr></thead><tbody>`;
-
     products.forEach(p => {
       if (!s.metrics[p]) return;
       const ma = s.metrics[p].monthlyAchievement;
       const mt = s.metrics[p].monthlyTarget || 0;
-      let total = 0;
-      let cells = "";
-      let prev = null;
-
+      let total = 0, cells = "", prev = null;
       MONTHS.forEach(m => {
         const v = ma[m] || 0;
         if (selMonths.has(m)) total += v;
         let arrow = "";
         if (prev !== null) {
-          arrow = v > prev
-            ? `<span class="trend-up"> ↑</span>`
-            : v < prev
-            ? `<span class="trend-dn"> ↓</span>`
-            : `<span style="color:#bbb"> —</span>`;
+          arrow = v > prev ? `<span class="trend-up"> ↑</span>` : v < prev ? `<span class="trend-dn"> ↓</span>` : `<span style="color:#ccc"> —</span>`;
         }
         const dim = !selMonths.has(m) ? "opacity:0.3;" : "";
         const hi  = mt > 0 && v >= mt ? "background:#f0fdf4;" : "";
         cells += `<td style="${dim}${hi}">${v}${arrow}</td>`;
         prev = v;
       });
-
-      // For BL — label as branch target, no green highlight logic
       const productLabel = p === "BusinessLoan"
-        ? `<span style="color:#555">${PLABEL[p]}</span> <span style="font-size:10px;color:#9ca3af;font-style:italic">branch</span>`
+        ? `<span>${PLABEL[p]}</span> <span style="font-size:10px;color:var(--text3);font-style:italic">branch</span>`
         : PLABEL[p] || p;
-
       html += `<tr>
         <td style="font-weight:600;white-space:nowrap">${productLabel}</td>
         ${cells}
-        <td style="font-weight:700;color:#2f3e75">${fmt(total)}</td>
+        <td style="font-weight:700;color:var(--navy)">${fmt(total)}</td>
       </tr>`;
     });
-
     html += `</tbody></table></div>`;
   });
-
   document.getElementById("tp-trend").innerHTML = html;
 }
 
 /* ── BREAKDOWN MODAL ── */
 function openBreak(sname, pkey, metric) {
-  document.getElementById("modalTitle").textContent = sname + " — " + (PLABEL[pkey] || pkey);
+  document.getElementById("modalTitle").textContent = sname + " — " + (PLABEL[pkey]||pkey);
   const months = getMonths();
   const r  = calc(metric, months);
   const mt = metric.monthlyTarget || 0;
   let rows = MONTHS.map((m, idx) => {
     const v   = metric.monthlyAchievement[m] || 0;
-    const p   = mt > 0 ? Math.round(v / mt * 100) : 0;
+    const p   = mt > 0 ? Math.round(v/mt*100) : 0;
     const sel = selMonths.has(m);
     let arrow = "";
     if (idx > 0) {
       const pv = metric.monthlyAchievement[MONTHS[idx-1]] || 0;
-      arrow = v > pv ? `<span class="trend-up">↑</span>` : v < pv ? `<span class="trend-dn">↓</span>` : `<span style="color:#bbb">—</span>`;
+      arrow = v > pv ? `<span class="trend-up">↑</span>` : v < pv ? `<span class="trend-dn">↓</span>` : `<span style="color:#ccc">—</span>`;
     }
-    return `<tr style="${!sel ? "opacity:0.35" : ""}">
+    return `<tr style="${!sel?"opacity:0.35":""}">
       <td>${m}${sel ? ` <span class="badge bb" style="font-size:9px">selected</span>` : ""}</td>
       <td>${v} ${arrow}</td>
-      <td><div class="bar-wrap">
-        <div class="bar-bg" style="min-width:80px">
-          <div class="bar-fill" style="width:${Math.min(p,100)}%;background:${pc(p)}"></div>
-        </div>
-      </div></td>
+      <td><div class="bar-wrap"><div class="bar-bg" style="min-width:80px"><div class="bar-fill" style="width:${Math.min(p,100)}%;background:${pc(p)}"></div></div></div></td>
       <td><span class="badge ${bc(p)}">${p}%</span></td>
     </tr>`;
   }).join("");
 
-  // Outstanding block — only for Investment and GoldLoan
-  const outstandingHTML = (pkey === "Investment" || pkey === "GoldLoan") && metric.outstanding !== null && metric.outstanding !== undefined
-    ? `<div style="margin-top:10px;padding:8px 10px;background:#fffbeb;border-radius:7px;border:1px solid #fcd34d;font-size:12px">
-        <span style="color:#92400e;font-weight:600">Outstanding portfolio: </span>
-        <span style="color:#92400e;font-weight:700">${fmt(metric.outstanding)}</span>
-       </div>`
-    : "";
+  /* ━━━ OUTSTANDING BLOCK — Investment, GoldLoan AND RD ━━━ */
+  let outstandingHTML = "";
+  if (OUT_CFG[pkey] && metric.outstanding !== null && metric.outstanding !== undefined) {
+    const cfg = OUT_CFG[pkey];
+    outstandingHTML = `
+      <div class="out-block ${cfg.blockCls}">
+        <div class="out-icon">${cfg.icon}</div>
+        <div>
+          <div class="out-lbl">${cfg.label}</div>
+          <div class="out-val">${fmt(metric.outstanding)}</div>
+        </div>
+      </div>`;
+  }
 
   document.getElementById("modalBody").innerHTML = `
-    <div style="margin-bottom:10px;font-size:12px;color:#888">Monthly target: <b style="color:#222">${fmt(mt)}</b></div>
+    <div style="margin-bottom:10px;font-size:12px;color:var(--text3)">Monthly target: <b style="color:var(--text)">${fmt(mt)}</b></div>
     <table style="font-size:12px">
       <thead><tr><th>Month</th><th>Achievement</th><th>vs Target</th><th>%</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;display:flex;gap:16px;font-size:12px;flex-wrap:wrap">
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:16px;font-size:12px;flex-wrap:wrap">
       <span>Selected total: <b>${fmt(r.ach)}</b></span>
       <span>Target: <b>${fmt(r.tgt)}</b></span>
       <span style="color:${pc(r.pct)};font-weight:700">${r.pct}%</span>
@@ -944,69 +1419,229 @@ function doExport() {
   if (!branch) return;
   const months = getMonths();
   const staff  = getStaff();
-  let txt = `BRANCH REVIEW REPORT\n`;
-  txt += `Branch  : ${branch.branchName}\n`;
-  txt += `Months  : ${months.join(", ")}\n`;
-  txt += `Generated: ${new Date().toLocaleString()}\n\n`;
-  txt += `${"=".repeat(55)}\nBRANCH SUMMARY\n${"=".repeat(55)}\n`;
 
+  /* ━━━ HELPERS ━━━ */
+  const MONEY_PRODUCTS = new Set(["Investment","RD","GoldLoan","BusinessLoan"]);
+  const lastMonth      = months[months.length - 1];
+  const YTD_MONTHS     = MONTHS.slice(0, MONTHS.indexOf(lastMonth) + 1);
+
+  const PLABEL_SHORT = {
+    Investment:   "Investment",
+    RD:           "RD",
+    GoldLoan:     "Gold Loan",
+    BusinessLoan: "Bus. Loan",
+    SOLAR:        "Solar",
+    Visit:        "Visit"
+  };
+
+  function exact(n) { return Math.round(n); }
+
+  function dispVal(n, key) {
+    n = exact(n);
+    if (!MONEY_PRODUCTS.has(key)) return String(n);
+    const sign = n < 0 ? "−" : "";
+    const abs  = Math.abs(n);
+    // Print full figure with Indian comma formatting
+    return sign + "" + abs.toLocaleString('en-IN');
+  }
+
+  function dispShortfall(n, key) {
+    const v = dispVal(n, key);
+    const num = exact(n);
+    if (num === 0) return `<span class="flat">${v}</span>`;
+    return num < 0 ? `<span class="neg">${v}</span>` : `<span class="pos">+${v.replace(/^₹/,"")}</span>`;
+  }
+
+  function calcYTD(metric) {
+    let ytdAch = 0;
+    YTD_MONTHS.forEach(m => ytdAch += (metric.monthlyAchievement[m] || 0));
+    const ytdTgt = (metric.monthlyTarget || 0) * YTD_MONTHS.length;
+    return { ytdAch: exact(ytdAch), ytdTgt: exact(ytdTgt), shortfall: exact(ytdAch - ytdTgt) };
+  }
+
+  /* ━━━ AGGREGATE BRANCH TOTALS ━━━ */
   let totals = {};
   staff.forEach(s => {
     for (let k in s.metrics) {
-      if (!totals[k]) totals[k] = { tgt: 0, ach: 0 };
-      const r = calc(s.metrics[k], months);
-      totals[k].tgt += r.tgt; totals[k].ach += r.ach;
+      if (!totals[k]) totals[k] = { ach:0, tgt:0, ytdAch:0, ytdTgt:0 };
+      const r   = calc(s.metrics[k], months);
+      const ytd = calcYTD(s.metrics[k]);
+      totals[k].ach    += exact(r.ach);
+      totals[k].ytdAch += ytd.ytdAch;
+      if (k !== "BusinessLoan") { totals[k].tgt += exact(r.tgt); totals[k].ytdTgt += ytd.ytdTgt; }
     }
   });
-  for (let k in totals) {
-    const p = totals[k].tgt > 0 ? Math.round(totals[k].ach / totals[k].tgt * 100) : 0;
-    txt += `${(PLABEL[k]||k).padEnd(20)} ${fmt(totals[k].ach).padStart(8)} / ${fmt(totals[k].tgt).padStart(8)}  ${String(p+"%").padStart(5)}\n`;
+  if (totals["BusinessLoan"]) {
+    const blM = branch.blBranchMonthlyTarget || 0;
+    const blA = branch.blBranchTotalTarget   || 0;
+    totals["BusinessLoan"].ytdTgt = blA > 0 ? exact(blA) : exact(blM * YTD_MONTHS.length);
   }
 
-  txt += `\n${"=".repeat(55)}\nSTAFF DETAILS\n${"=".repeat(55)}\n`;
-  staff.forEach(s => {
-    txt += `\n${s.name}\n${"-".repeat(35)}\n`;
-    for (let k in s.metrics) {
-      const r = calc(s.metrics[k], months);
-      txt += `  ${(PLABEL[k]||k).padEnd(18)} ${fmt(r.ach).padStart(8)} / ${fmt(r.tgt).padStart(8)}  ${String(r.pct+"%").padStart(5)}  gap: ${fmt(r.gap)}\n`;
-    }
-  });
+  /* ━━━ BUILD HTML ━━━ */
+  const gen   = new Date().toLocaleString();
+  const pname = months.length === 1 ? months[0] : months.join("–");
 
-  txt += `\n${"=".repeat(55)}\nCORRECTIVE ACTIONS REQUIRED\n${"=".repeat(55)}\n`;
-  staff.forEach(s => {
-    for (let k in s.metrics) {
-      const r = calc(s.metrics[k], months);
-      if (r.pct < 100) {
-        txt += `\n${s.name} — ${PLABEL[k]||k} (${r.pct}%)\n`;
-        const steps = STEPS[k] || [];
-        steps.forEach((st, i) => txt += `  ${i+1}. ${st}\n`);
-      }
-    }
-  });
+  // ── Branch summary rows ──
+  const summaryRows = Object.keys(totals).map(k => {
+    const isBL = k === "BusinessLoan";
+    const tgt  = isBL ? '<i class="mu">branch</i>' : dispVal(totals[k].tgt, k);
+    const ach  = dispVal(totals[k].ach, k);
+    const sf   = isBL ? '<i class="mu">—</i>' : dispShortfall(totals[k].ytdAch - totals[k].ytdTgt, k);
+    return `<tr><td class="lc">${PLABEL_SHORT[k]||k}${isBL?' <i class="mu">br</i>':""}</td><td>${tgt}</td><td>${ach}</td><td>${sf}</td></tr>`;
+  }).join("");
 
-  const b = new Blob([txt], { type: "text/plain" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(b);
-  a.download = `review_${branch.branchName}_${months.join("-")}.txt`;
-  a.click();
+  const trendTHs = YTD_MONTHS.map(m => `<th class="tc">${m}</th>`).join("");
+
+  function buildCombinedRows(s) {
+    return Object.keys(s.metrics).map(k => {
+      const metric = s.metrics[k];
+      const r      = calc(metric, months);
+      const ytd    = calcYTD(metric);
+      const isBL   = k === "BusinessLoan";
+      const ma     = metric.monthlyAchievement || {};
+      const mt     = metric.monthlyTarget || 0;
+
+      const tgt   = isBL ? '<i class="mu">br</i>' : dispVal(exact(r.tgt), k);
+      const ach   = dispVal(exact(r.ach), k);
+      const sf    = isBL ? '<span class="mu">—</span>' : dispShortfall(ytd.shortfall, k);
+      
+      const outst = (metric.outstanding !== null && metric.outstanding !== undefined)
+                      ? dispVal(exact(metric.outstanding), k) 
+                      : '<span class="mu">—</span>';
+
+      const trendTDs = YTD_MONTHS.map(m => {
+        const v = exact(ma[m] || 0);
+        const hi = mt > 0 && v >= mt ? " hit" : "";
+        // Pure text string for the value; removed the '<br>' and arrow logic
+        return `<td class="tc${hi}">${dispVal(v,k)}</td>`;
+      }).join("");
+
+      return `<tr><td class="lc">${PLABEL_SHORT[k]||k}${isBL?' <i class="mu">br</i>':""}</td><td>${tgt}</td><td>${ach}</td><td class="tc">${outst}</td><td>${sf}</td>${trendTDs}</tr>`;
+    }).join("");
+  }
+
+  const staffHTML = staff.map(s => {
+    let sa = 0, st = 0;
+    for (let k in s.metrics) {
+      if (k === "BusinessLoan") continue;
+      const r = calc(s.metrics[k], months);
+      sa += exact(r.ach); st += exact(r.tgt);
+    }
+    const op  = st > 0 ? Math.round(sa/st*100) : 0;
+    return `<div class="sb">
+  <div class="sh"><span class="sn">${s.name}</span><span class="sp">${op}% — ${pname}</span></div>
+  <table><thead><tr>
+    <th class="lc">Product</th>
+    <th>Target</th>
+    <th>Achieved</th>
+    <th class="tc">Outstanding</th>
+    <th>Short Fall</th>
+    ${trendTHs}
+  </tr></thead><tbody>${buildCombinedRows(s)}</tbody></table>
+</div>`;
+  }).join("");
+
+  /* ━━━ HTML DOCUMENT ━━━ */
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Review — ${branch.branchName} — ${pname}</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:9px;color:#000;padding:4mm 5mm}
+
+/* ── page header ── */
+.ph{display:flex;justify-content:space-between;align-items:center;
+    border-bottom:1px solid #000;padding-bottom:3px;margin-bottom:4px}
+.ph-l h1{font-size:12px;font-weight:700;color:#000;line-height:1.1}
+.ph-l p{font-size:8px;color:#000;margin-top:1px}
+.ph-r{text-align:right;font-size:8px;color:#000}
+.ph-r b{font-size:10px;color:#000;display:block}
+
+/* ── section label ── */
+.sl{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    color:#000;padding:2px 5px;margin-bottom:0; width: max-content; min-width: 65%; border: 1px solid #000; border-bottom: none;}
+
+/* ── shared table styles ── */
+table{border-collapse:collapse;font-size:9px;table-layout:auto; width: max-content; border: 1px solid #000;}
+th{color:#000;padding:1px 4px;font-size:8px;font-weight:700;
+   letter-spacing:.02em;text-transform:uppercase;border:1px solid #000;
+   text-align:right;vertical-align:bottom;white-space:nowrap;line-height:1.1}
+td{padding:1px 4px;border:1px solid #000;vertical-align:middle;text-align:right;white-space:nowrap;color:#000;}
+
+td.lc,th.lc{text-align:left;font-weight:600;}
+td.tc,th.tc{text-align:center;}
+td.hit{font-weight:bold;}
+
+/* ── branch summary ── */
+.bsw{margin-bottom:4px;border:none; width: max-content; min-width: 65%;}
+.fn{font-size:8px;color:#000;padding:2px 4px;border:1px solid #000; border-top:none;}
+
+/* ── staff blocks ── */
+.sb{border:1px solid #000;margin-bottom:3px;page-break-inside:avoid;overflow:hidden; width: max-content; min-width: 65%;}
+.sh{border-bottom:1px solid #000; padding:2px 6px;display:flex;justify-content:space-between;align-items:center}
+.sn{font-size:10px;font-weight:700;color:#000}
+.sp{font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;color:#000;}
+
+/* ── colour classes (converted to B&W) ── */
+.pos, .neg, .up, .dn{color:#000;font-weight:700}
+.flat{color:#000}
+.mu{color:#000;font-style:italic}
+
+/* ── print ── */
+@media print{
+  body{padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sb{page-break-inside:avoid}
+  @page{size:A4 portrait;margin:5mm}
+}
+</style>
+</head>
+<body>
+
+<div class="ph">
+  <div class="ph-l">
+    <h1>Branch Review — ${branch.branchName}</h1>
+    <p>Generated: ${gen} &nbsp;·&nbsp; YTD Gap = YTD Achieved (Apr–${lastMonth}) minus YTD Target &nbsp;·&nbsp; Bold cell = hit monthly target</p>
+  </div>
+  <div class="ph-r"><span>Period</span><b>${pname}</b><span>YTD: Apr–${lastMonth}</span></div>
+</div>
+
+<div class="sl">Branch Summary</div>
+<div class="bsw">
+  <table>
+    <thead><tr>
+      <th class="lc">Product</th>
+      <th>Target</th>
+      <th>Achieved</th>
+      <th>Short Fall</th>
+    </tr></thead>
+    <tbody>${summaryRows}</tbody>
+  </table>
+  <div class="fn">* Business Loan target is set at branch level, not per staff member.</div>
+</div>
+
+<div class="sl">Staff Details &amp; Monthly Trends (Apr – ${lastMonth})</div>
+${staffHTML}
+
+</body></html>`;
+
+  const blob = new Blob([html], {type:"text/html"});
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, "_blank");
+  if (win) win.onload = () => setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
 /* ── INIT ── */
 load().then(() => checkReviewedStatus());
 </script>
-<!-- Staff reviewed button — shown only for staff role -->
-<div id="reviewedBar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;
-  background:linear-gradient(90deg,#2f3e75,#3d52a0);
-  padding:12px 18px;display:flex;align-items:center;justify-content:space-between;
-  box-shadow:0 -2px 12px rgba(0,0,0,0.2);flex-wrap:wrap;gap:8px">
-  <span style="font-size:13px;color:#fff;font-weight:600" id="reviewedMsg">
+
+<!-- Staff reviewed bar — shown only for staff role -->
+<div id="reviewedBar">
+  <span style="font-size:13px;color:#fff;font-weight:500" id="reviewedMsg">
     📌 Have you reviewed your performance for today?
   </span>
-  <button id="reviewedBtn" onclick="markReviewed()"
-    style="padding:8px 20px;background:#22c55e;color:#fff;border:none;border-radius:8px;
-    font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.03em">
-    ✓ Mark as Reviewed
-  </button>
+  <button id="reviewedBtn" onclick="markReviewed()">✓ Mark as Reviewed</button>
 </div>
 
 </body>
