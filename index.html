@@ -727,7 +727,6 @@
 const API      = "https://script.google.com/macros/s/AKfycbzy_um_SLPLkZAEvEjYGKR8N3QYXORaRJBe9_soQSUWhTY1sAhSYev3hWtywxFE3mvQtw/exec";
 const AUTH_URL = "https://script.google.com/macros/s/AKfycbzTPB10fdiNYo2mRF_pIsUuPfOhFW02_omSZYCPhPq_ybtVYqz5HWrbB7ia7C4lb5j7-g/exec";
 
-
 const MONTHS = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 const PLABEL = {
@@ -820,12 +819,80 @@ function setupRoleUI() {
   }
 }
 
+const RD_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxcZ5BVpz-jvCQze4msaEqv1uSUTS-Z-mulCPYUU9xvh0_8R4aDoMmOIMclJQbIeeVWAtA9qkyJ8Vv/pub?gid=658458096&single=true&output=csv";
+
+async function fetchRDOutstanding() {
+  try {
+    const res = await fetch(RD_CSV_URL);
+    const text = await res.text();
+    const rows = text.split('\n');
+    if (rows.length < 2) return {};
+
+    const headers = rows[0].split(',').map(h => h.trim());
+    const nameIdx = headers.indexOf('Staff Members');
+    const compIdx = headers.indexOf('Company');
+    const outIdx  = headers.indexOf('Total Outstanding');
+
+    if (nameIdx === -1 || compIdx === -1 || outIdx === -1) return {};
+
+    const rdMap = {};
+    for (let i = 1; i < rows.length; i++) {
+      if (!rows[i].trim()) continue;
+
+      // Custom parser to handle quotes and commas inside numbers (e.g., "5,00,000")
+      let cols = [];
+      let current = "";
+      let inQuotes = false;
+      for (let char of rows[i]) {
+        if (char === '"') inQuotes = !inQuotes;
+        else if (char === ',' && !inQuotes) { cols.push(current); current = ""; }
+        else current += char;
+      }
+      cols.push(current);
+
+      const comp = (cols[compIdx] || "").trim();
+      
+      // Filter for SML only
+      if (comp === "SML") {
+        const name = (cols[nameIdx] || "").trim();
+        // Remove formatting characters to get a clean float
+        const outValStr = (cols[outIdx] || "").replace(/,/g, '').replace(/"/g, '').trim();
+        const outVal = parseFloat(outValStr) || 0;
+        
+        if (name) rdMap[name.toLowerCase()] = outVal;
+      }
+    }
+    return rdMap;
+  } catch (e) {
+    console.error("Error fetching RD CSV:", e);
+    return {};
+  }
+}
+
 async function load() {
   try {
     const r = await fetch(API + "?token=" + encodeURIComponent(SESSION_TOKEN));
     const j = await r.json();
     if (j.error === "unauthorized") { doLogout(); return; }
     allData = j.branches;
+
+    // ━━━ INJECT RD OUTSTANDING FROM CSV ━━━
+    const rdMap = await fetchRDOutstanding();
+    allData.forEach(b => {
+      (b.staff || []).forEach(s => {
+        const sName = s.name.trim().toLowerCase();
+        if (rdMap[sName] !== undefined) {
+          // Initialize RD object if it doesn't exist for this staff member yet
+          if (!s.metrics["RD"]) {
+            s.metrics["RD"] = { monthlyAchievement: {}, monthlyTarget: 0 };
+          }
+          // Set the outstanding value
+          s.metrics["RD"].outstanding = rdMap[sName];
+        }
+      });
+    });
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
     setupRoleUI();
     if (SESSION_ROLE === "admin") {
       const sel = document.getElementById("branchSel");
@@ -1441,7 +1508,6 @@ function doExport() {
     if (!MONEY_PRODUCTS.has(key)) return String(n);
     const sign = n < 0 ? "−" : "";
     const abs  = Math.abs(n);
-    // Print full figure with Indian comma formatting
     return sign + "" + abs.toLocaleString('en-IN');
   }
 
@@ -1479,6 +1545,8 @@ function doExport() {
 
   /* ━━━ BUILD HTML ━━━ */
   const gen   = new Date().toLocaleString();
+  
+  // This variable holds the name of the selected month(s) (e.g. "Jun" or "Apr-Jun")
   const pname = months.length === 1 ? months[0] : months.join("–");
 
   // ── Branch summary rows ──
@@ -1512,30 +1580,33 @@ function doExport() {
       const trendTDs = YTD_MONTHS.map(m => {
         const v = exact(ma[m] || 0);
         const hi = mt > 0 && v >= mt ? " hit" : "";
-        // Pure text string for the value; removed the '<br>' and arrow logic
         return `<td class="tc${hi}">${dispVal(v,k)}</td>`;
       }).join("");
 
-      return `<tr><td class="lc">${PLABEL_SHORT[k]||k}${isBL?' <i class="mu">br</i>':""}</td><td>${tgt}</td><td>${ach}</td><td class="tc">${outst}</td><td>${sf}</td>${trendTDs}</tr>`;
+      return `<tr><td class="lc">${PLABEL_SHORT[k]||k}${isBL?' <i class="mu">br</i>':""}</td><td class="tc">${outst}</td><td>${tgt}</td><td>${ach}</td><td>${sf}</td>${trendTDs}</tr>`;
     }).join("");
   }
 
   const staffHTML = staff.map(s => {
-    let sa = 0, st = 0;
-    for (let k in s.metrics) {
-      if (k === "BusinessLoan") continue;
-      const r = calc(s.metrics[k], months);
-      sa += exact(r.ach); st += exact(r.tgt);
+    // Inject DOJ calculation 
+    let dojText = "";
+    if (s.doj) {
+      const parts   = s.doj.split("-");
+      const dojDate = new Date(`${parts[1]} ${parts[0]} ${parts[2]}`);
+      const diffMs  = Date.now() - dojDate.getTime();
+      const yrs     = diffMs / (1000 * 60 * 60 * 24 * 365.25);
+      const display = yrs < 1 ? `${Math.round(yrs*12)}m` : `${yrs.toFixed(1)}y`;
+      dojText = ` <span style="font-size:10.5px;font-weight:normal;color:#444">· DOJ: ${s.doj} (${display})</span>`;
     }
-    const op  = st > 0 ? Math.round(sa/st*100) : 0;
+
     return `<div class="sb">
-  <div class="sh"><span class="sn">${s.name}</span><span class="sp">${op}% — ${pname}</span></div>
+  <div class="sh"><span class="sn">${s.name}${dojText}</span></div>
   <table><thead><tr>
     <th class="lc">Product</th>
-    <th>Target</th>
-    <th>Achieved</th>
     <th class="tc">Outstanding</th>
-    <th>Short Fall</th>
+    <th>Target (${pname})</th>
+    <th>Achieved (${pname})</th>
+    <th>Short Fall from April</th>
     ${trendTHs}
   </tr></thead><tbody>${buildCombinedRows(s)}</tbody></table>
 </div>`;
@@ -1549,40 +1620,39 @@ function doExport() {
 <title>Review — ${branch.branchName} — ${pname}</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;font-size:9px;color:#000;padding:4mm 5mm}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:10.5px;color:#000;padding:4mm 5mm}
 
 /* ── page header ── */
 .ph{display:flex;justify-content:space-between;align-items:center;
-    border-bottom:1px solid #000;padding-bottom:3px;margin-bottom:4px}
-.ph-l h1{font-size:12px;font-weight:700;color:#000;line-height:1.1}
-.ph-l p{font-size:8px;color:#000;margin-top:1px}
-.ph-r{text-align:right;font-size:8px;color:#000}
-.ph-r b{font-size:10px;color:#000;display:block}
+    border-bottom:1px solid #000;padding-bottom:4px;margin-bottom:6px}
+.ph-l h1{font-size:14px;font-weight:700;color:#000;line-height:1.1}
+.ph-l p{font-size:9px;color:#000;margin-top:2px}
+.ph-r{text-align:right;font-size:9px;color:#000}
+.ph-r b{font-size:11px;color:#000;display:block}
 
 /* ── section label ── */
-.sl{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
-    color:#000;padding:2px 5px;margin-bottom:0; width: max-content; min-width: 65%; border: 1px solid #000; border-bottom: none;}
+.sl{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    color:#000;padding:4px 5px;margin-bottom:0; width: 100%; border: 1px solid #000; border-bottom: none;}
 
 /* ── shared table styles ── */
-table{border-collapse:collapse;font-size:9px;table-layout:auto; width: max-content; border: 1px solid #000;}
-th{color:#000;padding:1px 4px;font-size:8px;font-weight:700;
+table{border-collapse:collapse;font-size:10.5px;table-layout:auto; width: 100%; border: 1px solid #000;}
+th{color:#000;padding:3px 4px;font-size:9px;font-weight:700;
    letter-spacing:.02em;text-transform:uppercase;border:1px solid #000;
    text-align:right;vertical-align:bottom;white-space:nowrap;line-height:1.1}
-td{padding:1px 4px;border:1px solid #000;vertical-align:middle;text-align:right;white-space:nowrap;color:#000;}
+td{padding:3px 4px;border:1px solid #000;vertical-align:middle;text-align:right;white-space:nowrap;color:#000;}
 
 td.lc,th.lc{text-align:left;font-weight:600;}
 td.tc,th.tc{text-align:center;}
 td.hit{font-weight:bold;}
 
 /* ── branch summary ── */
-.bsw{margin-bottom:4px;border:none; width: max-content; min-width: 65%;}
-.fn{font-size:8px;color:#000;padding:2px 4px;border:1px solid #000; border-top:none;}
+.bsw{margin-bottom:6px;border:none; width: 100%;}
+.fn{font-size:9px;color:#000;padding:3px 4px;border:1px solid #000; border-top:none;}
 
 /* ── staff blocks ── */
-.sb{border:1px solid #000;margin-bottom:3px;page-break-inside:avoid;overflow:hidden; width: max-content; min-width: 65%;}
-.sh{border-bottom:1px solid #000; padding:2px 6px;display:flex;justify-content:space-between;align-items:center}
-.sn{font-size:10px;font-weight:700;color:#000}
-.sp{font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;color:#000;}
+.sb{border:1px solid #000;margin-bottom:6px;page-break-inside:avoid;overflow:hidden; width: 100%;}
+.sh{border-bottom:1px solid #000; padding:4px 6px;display:flex;justify-content:space-between;align-items:center}
+.sn{font-size:12px;font-weight:700;color:#000}
 
 /* ── colour classes (converted to B&W) ── */
 .pos, .neg, .up, .dn{color:#000;font-weight:700}
@@ -1612,9 +1682,9 @@ td.hit{font-weight:bold;}
   <table>
     <thead><tr>
       <th class="lc">Product</th>
-      <th>Target</th>
-      <th>Achieved</th>
-      <th>Short Fall</th>
+      <th>Target (${pname})</th>
+      <th>Achieved (${pname})</th>
+      <th>Short Fall from April</th>
     </tr></thead>
     <tbody>${summaryRows}</tbody>
   </table>
