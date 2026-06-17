@@ -853,7 +853,7 @@ async function fetchRDOutstanding() {
       const comp = (cols[compIdx] || "").trim();
       
       // Filter for SML only
-      if (comp === "SML") {
+      if (comp === "SML" || comp === "SNL") {
         const name = (cols[nameIdx] || "").trim();
         // Remove formatting characters to get a clean float
         const outValStr = (cols[outIdx] || "").replace(/,/g, '').replace(/"/g, '').trim();
