@@ -289,7 +289,9 @@
     tr:last-child td { border-bottom: none; }
     tbody tr:hover td { background: var(--surf2); }
 
-    /* staff card layout — flex-based rows, no tables */
+    /* staff card tighter */
+    .sc table td  { padding: 7px 10px; }
+    .sc table th  { padding: 7px 10px; }
 
     /* ━━━ PROGRESS BAR ━━━ */
     .bar-wrap { display: flex; align-items: center; gap: 7px; }
@@ -346,295 +348,83 @@
     /* ━━━ STAFF GRID ━━━ */
     .staff-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
-      gap: 20px;
-      padding: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 14px;
+      padding: 14px;
     }
-
-    /* ━━━ STAFF CARD ━━━ */
     .sc {
       background: var(--surf);
-      border-radius: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
       overflow: hidden;
-      box-shadow: 0 1px 4px rgba(15,23,80,.06), 0 6px 24px rgba(15,23,80,.08), 0 0 0 1px rgba(60,80,160,.10);
-      transition: box-shadow .3s, transform .2s;
-      position: relative;
-      display: flex;
-      flex-direction: column;
+      box-shadow: var(--shadow);
+      transition: box-shadow .2s, transform .15s;
     }
-    .sc:hover {
-      box-shadow: 0 8px 32px rgba(15,23,80,.15), 0 24px 56px rgba(15,23,80,.10), 0 0 0 1px rgba(60,80,160,.16);
-      transform: translateY(-3px);
-    }
-
-    /* ── Card header ── */
+    .sc:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
     .sc-head {
-      padding: 20px 22px 18px;
-      background: linear-gradient(135deg, #1a3475 0%, #2347a8 55%, #3358c8 100%);
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 16px;
-      position: relative;
-      overflow: hidden;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 5px;
+      background: var(--navy);
     }
-    /* Decorative soft radial glow */
-    .sc-head::after {
-      content: '';
-      position: absolute;
-      right: -30px; top: -40px;
-      width: 140px; height: 140px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,.10) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .avatar {
-      width: 46px; height: 46px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.15);
-      border: 2px solid rgba(255,255,255,.25);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      font-weight: 800;
-      color: #fff;
-      flex-shrink: 0;
-      letter-spacing: .04em;
-      box-shadow: 0 4px 12px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.18);
-    }
-
-    .sc-info { flex: 1; min-width: 0; }
     .sc-name {
-      font-size: 16px;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 600;
       color: #fff;
-      letter-spacing: -.015em;
-      line-height: 1.2;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .doj-tag {
-      font-size: 11px;
-      color: rgba(255,255,255,.55);
-      font-weight: 400;
-      margin-top: 4px;
       display: flex;
       align-items: center;
-      gap: 4px;
-    }
-    .doj-yrs {
-      color: #93c5fd;
-      font-weight: 700;
-      background: rgba(147,197,253,.12);
-      padding: 1px 6px;
-      border-radius: 20px;
-    }
-
-    /* Overall % pill — right side of header */
-    .sc-pill-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-    .sc-overall-pill {
-      font-size: 18px;
-      font-weight: 800;
-      padding: 6px 14px;
-      border-radius: 12px;
-      letter-spacing: -.02em;
-      line-height: 1;
-    }
-    .sc-period-lbl {
-      font-size: 10px;
-      color: rgba(255,255,255,.45);
-      font-weight: 500;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-
-    /* ── Product rows ── */
-    .sc-products { flex: 1; padding: 0; }
-
-    .sc-prod-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 0;
-      border-bottom: 1px solid #f0f2fa;
-      padding: 0;
-    }
-    .sc-prod-row:last-child { border-bottom: none; }
-
-    .sc-prod-main {
-      padding: 14px 18px;
-      display: flex;
-      flex-direction: column;
       gap: 8px;
     }
-
-    .sc-prod-top {
+    .avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.18);
       display: flex;
       align-items: center;
-      gap: 9px;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      letter-spacing: .03em;
     }
-    .prod-dot {
-      width: 9px; height: 9px;
+    .doj-tag { font-size: 10px; color: rgba(255,255,255,.45); font-weight: 400; }
+    .doj-yrs { color: #93c5fd; font-weight: 600; }
+
+    /* ━━━ OUTSTANDING SUB-ROWS ━━━ */
+    /* Investment — cool blue */
+    tr.out-inv td {
+      background: #eff6ff !important;
+      border-bottom: 1px dashed #bfdbfe !important;
+    }
+    /* Gold Loan — warm amber */
+    tr.out-gl td {
+      background: #fffbeb !important;
+      border-bottom: 1px dashed #fde68a !important;
+    }
+    /* RD — teal */
+    tr.out-rd td {
+      background: #f0fdfa !important;
+      border-bottom: 1px dashed #99f6e4 !important;
+    }
+    .out-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .out-pip {
+      width: 7px; height: 7px;
       border-radius: 50%;
       flex-shrink: 0;
     }
-    .prod-name {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text);
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
-
-    .sc-amounts {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .sc-ach {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--navy);
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -.02em;
-      cursor: pointer;
-    }
-    .sc-ach:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(59,130,246,.5); }
-    .sc-sep { font-size: 12px; color: var(--text3); }
-    .sc-tgt {
-      font-size: 12px;
-      color: var(--text3);
-      font-weight: 500;
-      font-variant-numeric: tabular-nums;
-    }
-    .sc-tgt-lbl { font-size: 10px; color: var(--text3); }
-
-    /* Progress bar inline */
-    .sc-bar-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .sc-bar-bg {
-      flex: 1;
-      height: 4px;
-      border-radius: 4px;
-      background: #e8ebf8;
-      overflow: hidden;
-      min-width: 40px;
-    }
-    .sc-bar-fill {
-      height: 100%;
-      border-radius: 4px;
-      transition: width .5s cubic-bezier(.4,0,.2,1);
-    }
-    .sc-pct-lbl {
-      font-size: 11px;
-      font-weight: 700;
-      min-width: 34px;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
-    .sc-gap {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 6px;
-    }
-    .sc-gap.pos { background: #dcfce7; color: #15803d; }
-    .sc-gap.neg { background: #fee2e2; color: #b91c1c; }
-    .sc-gap.neu { background: #f1f5f9; color: var(--text3); }
-
-    /* YTD gap — slightly muted style to distinguish from period gap */
-    .sc-gap-ytd {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 6px;
-      border: 1px dashed;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-    }
-    .sc-gap-ytd.pos { background: #f0fdf4; color: #15803d; border-color: #86efac; }
-    .sc-gap-ytd.neg { background: #fff5f5; color: #b91c1c; border-color: #fca5a5; }
-    .sc-gap-ytd.neu { background: #f8fafc; color: var(--text3); border-color: #cbd5e1; }
-    .sc-gap-ytd-lbl { font-size: 9px; font-weight: 800; letter-spacing: .06em; opacity: .75; }
-
-    /* Right side: badge */
-    .sc-prod-right {
-      padding: 14px 16px 14px 0;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    /* Outstanding inlined under each product */
-    .sc-outstanding {
-      margin: 0 18px 12px;
-      padding: 9px 12px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border: 1px solid;
-    }
-    .sc-outstanding.out-inv { background: #eff6ff; border-color: #bfdbfe; }
-    .sc-outstanding.out-gl  { background: #fffbeb; border-color: #fde68a; }
-    .sc-outstanding.out-rd  { background: #f0fdfa; border-color: #a7f3d0; }
-    .sc-out-icon {
-      width: 30px; height: 30px;
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; flex-shrink: 0;
-    }
-    .out-inv .sc-out-icon { background: #dbeafe; }
-    .out-gl  .sc-out-icon { background: #fef3c7; }
-    .out-rd  .sc-out-icon { background: #ccfbf1; }
-    .sc-out-info { flex: 1; min-width: 0; }
-    .sc-out-lbl {
-      font-size: 10px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: .07em;
-      margin-bottom: 1px;
-    }
-    .out-inv .sc-out-lbl { color: #1e40af; }
-    .out-gl  .sc-out-lbl { color: #92400e; }
-    .out-rd  .sc-out-lbl { color: #0f766e; }
-    .sc-out-val {
-      font-size: 15px; font-weight: 800;
-      font-variant-numeric: tabular-nums;
-    }
-    .out-inv .sc-out-val { color: #1d4ed8; }
-    .out-gl  .sc-out-val { color: #b45309; }
-    .out-rd  .sc-out-val { color: #0f766e; }
-
-    /* BL branch row */
-    .sc-bl-row {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 14px 18px;
-      border-bottom: 1px solid #f0f2fa;
-    }
-    .sc-bl-row:last-child { border-bottom: none; }
-    .sc-bl-ach {
-      font-size: 18px; font-weight: 800;
-      color: var(--navy); font-variant-numeric: tabular-nums;
-      cursor: pointer;
-    }
-    .sc-bl-ach:hover { text-decoration: underline; text-underline-offset: 3px; }
-    .sc-bl-note { font-size: 11px; color: var(--text3); font-style: italic; }
+    .out-label { font-weight: 500; opacity: .8; }
+    .out-amount { font-weight: 700; font-size: 12px; }
 
     /* ━━━ RANKINGS ━━━ */
     .rank-row {
@@ -870,18 +660,11 @@
     @media (max-width: 640px) {
       .topbar { padding: 0 12px; height: 50px; gap: 7px; }
       .topbar h1 { font-size: 13px; }
-      .main { padding: 10px 10px; gap: 10px; }
+      .main { padding: 10px 12px; gap: 10px; }
       .metrics-row { grid-template-columns: 1fr 1fr; gap: 9px; padding: 11px 13px; }
-      .staff-grid { grid-template-columns: 1fr; padding: 10px; gap: 14px; }
+      .staff-grid { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
       .ca-grid { grid-template-columns: 1fr; padding: 10px; }
       .tab { padding: 10px 13px; font-size: 11px; }
-      .sc-head { padding: 16px 16px 14px; gap: 12px; }
-      .sc-name { font-size: 14px; }
-      .sc-overall-pill { font-size: 16px; padding: 5px 11px; }
-      .sc-prod-main { padding: 12px 14px; }
-      .sc-prod-right { padding: 12px 12px 12px 0; }
-      .sc-ach { font-size: 16px; }
-      .sc-outstanding { margin: 0 14px 10px; }
     }
   </style>
 </head>
@@ -1228,30 +1011,6 @@ function fmt(n) {
   return n.toLocaleString();
 }
 
-/* Full unabbreviated amount — used in staff cards for clarity */
-const MONEY_KEYS = new Set(["Investment","RD","GoldLoan","BusinessLoan"]);
-function fmtFull(n, key) {
-  n = Math.round(n);
-  if (n === 0) return "0";
-  if (key && !MONEY_KEYS.has(key)) {
-    // Non-money product (Solar, Visit) — plain number, no ₹
-    const sign = n < 0 ? "−" : "";
-    return sign + Math.abs(n).toLocaleString('en-IN');
-  }
-  const sign = n < 0 ? "−" : "";
-  return sign + "₹" + Math.abs(n).toLocaleString('en-IN');
-}
-
-/* Product accent colours for the card dot */
-const PROD_COLOR = {
-  Investment:   "#3b82f6",
-  RD:           "#14b8a6",
-  GoldLoan:     "#f59e0b",
-  BusinessLoan: "#8b5cf6",
-  SOLAR:        "#22c55e",
-  Visit:        "#f97316"
-};
-
 function initials(name) {
   return (name || "").trim().split(/\s+/).slice(0,2).map(w => w[0]?.toUpperCase() || "").join("");
 }
@@ -1420,130 +1179,76 @@ function renderSnap(staff, months) {
 function renderStaff(staff, months) {
   if (!staff.length) { document.getElementById("tp-staff").innerHTML = `<div class="empty">No staff to display.</div>`; return; }
   const mLabel = months.length === 1 ? months[0] : months.join("+");
-
-  /* YTD = Apr up to and including the latest selected month */
-  const lastSelMonth = [...months].sort((a,b) => MONTHS.indexOf(a)-MONTHS.indexOf(b)).at(-1);
-  const ytdMonths    = MONTHS.slice(0, MONTHS.indexOf(lastSelMonth) + 1);
-  const ytdLabel     = ytdMonths.length === 1 ? ytdMonths[0] : `Apr–${lastSelMonth}`;
-
-  /* Is the selected period already the full YTD? (hide duplicate if so) */
-  const periodIsYTD  = months.length === ytdMonths.length &&
-                       months.every(m => ytdMonths.includes(m));
-
   let html = `<div class="staff-grid">`;
-
   staff.forEach(s => {
-    let sa = 0, st = 0;
-    let prodsHTML = "";
-
+    let sa = 0, st = 0, rows = "";
     for (let k in s.metrics) {
       const r      = calc(s.metrics[k], months);
       const metric = s.metrics[k];
-      const dot    = PROD_COLOR[k] || "#94a3b8";
 
       if (k === "BusinessLoan") {
         sa += r.ach;
-        prodsHTML += `
-        <div class="sc-bl-row">
-          <span class="prod-dot" style="background:${dot}"></span>
-          <span class="prod-name">${PLABEL[k]||k}</span>
-          <span style="flex:1"></span>
-          <span class="sc-bl-ach"
-            onclick='openBreak(${JSON.stringify(s.name)},${JSON.stringify(k)},${JSON.stringify(metric)})'>${fmtFull(r.ach,k)}</span>
-          <span class="sc-bl-note">branch tgt</span>
-        </div>`;
+        rows += `<tr>
+          <td style="color:var(--text2)">${PLABEL[k]||k}</td>
+          <td style="color:var(--text3);font-style:italic;font-size:11px">Branch target</td>
+          <td style="cursor:pointer;color:#1d4ed8;text-decoration:underline"
+              onclick='openBreak(${JSON.stringify(s.name)},${JSON.stringify(k)},${JSON.stringify(metric)})'>${fmt(r.ach)}</td>
+          <td>—</td>
+          <td>—</td>
+        </tr>`;
       } else {
         sa += r.ach; st += r.tgt;
-        const barW   = Math.min(r.pct, 100);
-        const gapCls = r.gap > 0 ? "pos" : r.gap < 0 ? "neg" : "neu";
-        const gapStr = r.gap >= 0 ? "+" + fmtFull(r.gap, k) : fmtFull(r.gap, k);
+        const gap = r.gap;
+        rows += `<tr>
+          <td style="color:var(--text2)">${PLABEL[k]||k}</td>
+          <td>${fmt(r.tgt)}</td>
+          <td style="cursor:pointer;color:#1d4ed8;text-decoration:underline"
+              onclick='openBreak(${JSON.stringify(s.name)},${JSON.stringify(k)},${JSON.stringify(metric)})'>${fmt(r.ach)}</td>
+          <td><span class="badge ${bc(r.pct)}">${r.pct}%</span></td>
+          <td style="color:${gap<0?"#dc2626":"#16a34a"};font-weight:700">${gap>=0?"+":""}${fmt(gap)}</td>
+        </tr>`;
 
-        /* YTD gap */
-        const ytdR    = calc(metric, ytdMonths);
-        const ytdGap  = ytdR.gap;
-        const ytdCls  = ytdGap > 0 ? "pos" : ytdGap < 0 ? "neg" : "neu";
-        const ytdStr  = ytdGap >= 0 ? "+" + fmtFull(ytdGap, k) : fmtFull(ytdGap, k);
-
-        const ytdChip = periodIsYTD ? "" :
-          `<span class="sc-gap-ytd ${ytdCls}" title="YTD gap (${ytdLabel})">${ytdStr} <span class="sc-gap-ytd-lbl">YTD</span></span>`;
-
-        prodsHTML += `
-        <div class="sc-prod-row">
-          <div class="sc-prod-main">
-            <div class="sc-prod-top">
-              <span class="prod-dot" style="background:${dot}"></span>
-              <span class="prod-name">${PLABEL[k]||k}</span>
-            </div>
-            <div class="sc-amounts">
-              <span class="sc-ach"
-                onclick='openBreak(${JSON.stringify(s.name)},${JSON.stringify(k)},${JSON.stringify(metric)})'>${fmtFull(r.ach,k)}</span>
-              <span class="sc-sep">/</span>
-              <span class="sc-tgt-lbl">tgt&nbsp;</span><span class="sc-tgt">${fmtFull(r.tgt,k)}</span>
-            </div>
-            <div class="sc-bar-row">
-              <div class="sc-bar-bg">
-                <div class="sc-bar-fill" style="width:${barW}%;background:${pc(r.pct)}"></div>
-              </div>
-              <span class="sc-pct-lbl" style="color:${pc(r.pct)}">${r.pct}%</span>
-              <span class="sc-gap ${gapCls}">${gapStr}</span>
-              ${ytdChip}
-            </div>
-          </div>
-        </div>`;
-
-        /* Outstanding pill */
+        /* ━━━ OUTSTANDING SUB-ROW — Investment, GoldLoan AND RD ━━━ */
         if (OUT_CFG[k] && metric.outstanding !== null && metric.outstanding !== undefined) {
           const cfg = OUT_CFG[k];
-          prodsHTML += `
-          <div class="sc-outstanding out-${cfg.blockCls}">
-            <div class="sc-out-icon">${cfg.icon}</div>
-            <div class="sc-out-info">
-              <div class="sc-out-lbl">${cfg.label}</div>
-              <div class="sc-out-val">${fmtFull(metric.outstanding,k)}</div>
-            </div>
-          </div>`;
+          rows += `<tr class="${cfg.rowCls}">
+            <td colspan="2" style="padding-left:22px">
+              <span class="out-cell">
+                <span class="out-pip" style="background:${cfg.pip}"></span>
+                <span class="out-label">↳ ${cfg.label}</span>
+              </span>
+            </td>
+            <td colspan="3">
+              <span class="out-amount" style="color:${cfg.pip}">${fmt(metric.outstanding)}</span>
+            </td>
+          </tr>`;
         }
       }
     }
-
-    const op       = st > 0 ? Math.round(sa / st * 100) : 0;
-    const pillCls  = bc(op);
-    const pillColor = pc(op);
-
-    /* Pill background */
-    const pillBgMap = { bn: "rgba(22,197,94,.18)", ba: "rgba(251,191,36,.18)", bg: "rgba(239,68,68,.18)" };
-    const pillBg    = pillBgMap[pillCls] || "rgba(255,255,255,.12)";
-
-    /* DOJ */
-    let dojLine = "";
+    const op = st > 0 ? Math.round(sa / st * 100) : 0;
+    let dojBadge = "";
     if (s.doj) {
       const parts   = s.doj.split("-");
       const dojDate = new Date(`${parts[1]} ${parts[0]} ${parts[2]}`);
       const diffMs  = Date.now() - dojDate.getTime();
       const yrs     = diffMs / (1000 * 60 * 60 * 24 * 365.25);
       const display = yrs < 1 ? `${Math.round(yrs*12)}m` : `${yrs.toFixed(1)}y`;
-      dojLine = `<div class="doj-tag">DOJ: ${s.doj}&ensp;<span class="doj-yrs">${display}</span></div>`;
+      dojBadge = `<span class="doj-tag"> · DOJ: ${s.doj} <span class="doj-yrs">(${display})</span></span>`;
     }
-
-    html += `
-    <div class="sc">
+    html += `<div class="sc">
       <div class="sc-head">
-        <div class="avatar">${initials(s.name)}</div>
-        <div class="sc-info">
-          <div class="sc-name">${s.name}</div>
-          ${dojLine}
-        </div>
-        <div class="sc-pill-wrap">
-          <span class="sc-overall-pill" style="background:${pillBg};color:${pillColor}">${op}%</span>
-          <span class="sc-period-lbl">${mLabel}</span>
-        </div>
+        <span class="sc-name">
+          <span class="avatar">${initials(s.name)}</span>
+          <span>${s.name}${dojBadge}</span>
+        </span>
+        <span class="badge ${bc(op)}">${op}% — ${mLabel}</span>
       </div>
-      <div class="sc-products">
-        ${prodsHTML}
-      </div>
+      <table>
+        <thead><tr><th>Product</th><th>Target</th><th>Achieved</th><th>%</th><th>Gap</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
     </div>`;
   });
-
   html += `</div>`;
   document.getElementById("tp-staff").innerHTML = html;
 }
@@ -1753,7 +1458,7 @@ function openBreak(sname, pkey, metric) {
         <div class="out-icon">${cfg.icon}</div>
         <div>
           <div class="out-lbl">${cfg.label}</div>
-          <div class="out-val">${fmtFull(metric.outstanding)}</div>
+          <div class="out-val">${fmt(metric.outstanding)}</div>
         </div>
       </div>`;
   }
