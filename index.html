@@ -1891,6 +1891,10 @@ function doExport() {
     const blA = branch.blBranchTotalTarget   || 0;
     totals["BusinessLoan"].ytdTgt = blA > 0 ? exact(blA) : exact(blM * YTD_MONTHS.length);
   }
+  if (totals["GoldLoan"] && branch.glBranchMonthlyTarget) {
+    totals["GoldLoan"].tgt    = exact(branch.glBranchMonthlyTarget * months.length);
+    totals["GoldLoan"].ytdTgt = exact(branch.glBranchMonthlyTarget * YTD_MONTHS.length);
+  }
 
   /* ━━━ BUILD HTML ━━━ */
   const gen   = new Date().toLocaleString();
