@@ -263,6 +263,9 @@
     .mc.mc-green::after { background: linear-gradient(180deg,#4ade80,#22c55e); }
     .mc.mc-red::after   { background: linear-gradient(180deg,#f87171,#ef4444); }
     .mc.mc-amber::after { background: linear-gradient(180deg,#fbbf24,#f59e0b); }
+    .mc.mc-rddue { background: #fef2f2; }
+    .mc.mc-rddue::after { background: linear-gradient(180deg,#f87171,#b91c1c); }
+    .mc.mc-rddue:hover { box-shadow: 0 2px 10px rgba(220,38,38,.18); }
     .ml { font-size: 10px; color: var(--text3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
     .mv { font-size: 22px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
     .ms { font-size: 10px; color: var(--text3); margin-top: 3px; }
@@ -619,6 +622,18 @@
     .out-gl  .sc-out-val { color: #b45309; }
     .out-rd  .sc-out-val { color: #0f766e; }
 
+    /* RD Due pill — sits beside RD Outstanding, clickable drill-down */
+    .sc-outstanding.out-rddue { background: #fef2f2; border-color: #fecaca; cursor: pointer; transition: box-shadow .15s, transform .15s; }
+    .sc-outstanding.out-rddue:hover { box-shadow: 0 2px 8px rgba(220,38,38,.18); transform: translateY(-1px); }
+    .out-rddue .sc-out-icon { background: #fee2e2; }
+    .out-rddue .sc-out-lbl  { color: #b91c1c; }
+    .out-rddue .sc-out-val  { color: #b91c1c; }
+    .sc-out-sub {
+      font-size: 10.5px; font-weight: 600; color: #b91c1c; opacity: .75;
+      margin-top: 1px;
+    }
+    .sc-out-chevron { font-size: 11px; color: #b91c1c; opacity: .55; margin-left: 4px; }
+
     /* BL branch row */
     .sc-bl-row {
       display: flex;
@@ -835,6 +850,11 @@
     .inv .out-val { color: #1e40af; }
     .gl  .out-val  { color: #92400e; }
     .rd  .out-val  { color: #0f766e; }
+    .out-block.rddue { background: #fef2f2; border-color: #fecaca; }
+    .rddue .out-icon { background: #fee2e2; }
+    .rddue .out-lbl  { color: #b91c1c; }
+    .rddue .out-val  { color: #b91c1c; }
+    .out-block .out-sub { font-size: 11px; color: #7f1d1d; opacity: .8; margin-top: 3px; }
 
     /* ━━━ REVIEWED BAR ━━━ */
     #reviewedBar {
@@ -1038,6 +1058,71 @@ function setupRoleUI() {
 
 const RD_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxcZ5BVpz-jvCQze4msaEqv1uSUTS-Z-mulCPYUU9xvh0_8R4aDoMmOIMclJQbIeeVWAtA9qkyJ8Vv/pub?gid=658458096&single=true&output=csv";
 const GL_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPuLZy5EEg4acZqfVl5varn3gm9BsX72-PcQiLOkecuIF03o6etD3UKknOLCYdocV72iyxWX6B2Srm/pub?gid=1215943151&single=true&output=csv";
+const RD_DUE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRuvWqZEdMyig6Hht7u-WjVs0mi_VT2ygSgoXn6zs_85aURWB95zaeqxAvdMzbm4XGv-XrwhrBVKBux/pub?gid=0&single=true&output=csv";
+
+/* ━━━ SML COMPANY NORMALIZATION ━━━
+   Mirrors this dashboard's own RD Outstanding filter, which already treats
+   Company === "SML" OR "SNL" as the same entity (see fetchRDOutstanding
+   below). The raw RD due register's "Company" column is further
+   unreliable: for a large chunk of true-SML rows, the export puts the
+   BRANCH CODE (e.g. "PTNA", "PBVR", "EKM"), a full branch name (e.g.
+   "ALAPPUZHA", "HEAD OFFICE"), or an EMPLOYEE CODE (e.g. "8079") into the
+   Company cell instead of "SML"/"SNL" — the real Branch cell is left
+   blank in those rows. Cross-checked row-by-row against the
+   Branch_RD_due_MIS workbook's "sml" sheet:
+     - Cols A–D: canonical SML branch name + every known code variant.
+     - Cols E–G: SNL BRANCH / EMP CODE / EMP NAME — a second, separate
+       master roster (different branch set: Alappuzha, Aluva, Angamaly,
+       Edapally, Head Office, Kollam, Kothamangalam, Meppurambu,
+       Palluruthy, Parippally, Perumbavoor, Thiruvalla, Vadakkekad).
+   Even after matching every code/branch variant, some rows still slip
+   through if the Company cell holds something unrecognized — so as a
+   final, most-precise fallback we also match directly on the STAFF NAME
+   against the EMP NAME roster (cols E–G). If the due row's Staff_Name is
+   a known employee in that roster, we count it as SML/SNL regardless of
+   what's in the Company cell — employee identity is more reliable than
+   the messy Company field. */
+const SML_BRANCH_VARIANTS = new Set([
+  "SML","SNL","ALATHUR","ALTR","ALTHR","ANGAMALY","AGLY","CHENGANNOOR","CHGR","CHNR",
+  "EDAPPALLY","EDP","HARIPPAD","HRPD","KATTAPPANA","KTPNA","KATTAPANA",
+  "KODUVAYOOR","KDVR","KODUVAYUR","KOTTAYAM","KTYM","KUNNAMKULAM",
+  "KUZHALMANNAM","KZLM","MATTANCHERY","MTRY","MTTRY","MAVELIKKARA","MKVR","MVKR",
+  "MUVATTUPUZHA","MVPA","NEDUMKANDOM","NDKM","NEDUMKANDAM","NENMARA","NMRA",
+  "PARAVOOR","PRVR","PATHANAMTHITTA","PTNA","PERUMBAVOOR","PBVR","PRBR",
+  "THIRUVALLA","TRVLA","TRVL","THIRUVILAMALAI","TRWLM","TVMLA","THODUPUZHA","TDPA",
+  "KKM BRANCH","CO","EKM",
+  /* SNL roster branches (cols E–G) — sometimes exported as full names */
+  "ALAPPUZHA","ALUVA","EDAPALLY","HEAD OFFICE","KOLLAM","KOTHAMANGALAM",
+  "MEPPARAMBU","PALLURUTHY","PARIPPALLY","VADAKKEKAD"
+]);
+const SML_EMP_CODES = new Set([
+  "8079","8196","8206","8254","8023","8167","8059","8117","8134","8241","8011",
+  "8189","8207","8004","8012","8031","8081","8132","8192","8030","8211","8075",
+  "8090","8120","8197","8116","8216","8247","8251","8045","8060","8109","8142",
+  "8017","8173","8240","8255","8140","8183","8244","8252","8092","8164","8165","8212"
+]);
+/* EMP NAME roster (cols E–G) — normalized (collapsed whitespace, uppercase) name whitelist */
+const SML_EMP_NAMES = new Set([
+  "NEENU MOLE S","SNEHAMOL K","APARNA JAYAN","DHANYA D","BIJU P P","BINTA JOHN",
+  "REJITHA BIJU","SHEKHA RANI","PAVIN POLACHAN","VIDHYA PIOUS","LILLY VARGHESE",
+  "SWETHA RANJITH","ARUNKUMAR K J","SHOLLY RAMESH","SYAMALA MANOHARAN","AJI BIJU",
+  "ANJU MOLE A","DEVISREE J","ANJU KRISHNA","ANUPAMA SANTHOSH","SANTHINI K R",
+  "BALASUBRAMANIAN M","SARAVANAKUMAR K V","PREETHA","AISWARYA R","DHANYA K B",
+  "BENILA SEBASTIAN P S","MARY NEENU","ASWATHY K C","ARUNA A R","MANCHU R",
+  "AKHILA R S","RESHMI M S","BINDU S","SINI","SOORYAMOL T S","SOUPARNIKA SAJESH",
+  "ATHIRA MOHAN","DEVIKA DAS","KARTHIKA YESODHARAN","SHEEJA RAJESH","MANJUSHA K N",
+  "SMITHA PRATHAP","ANJALY ASWIN","SONA K S"
+]);
+function isSMLCompany(raw) {
+  const v = (raw || "").trim().toUpperCase();
+  if (!v) return false;
+  return SML_BRANCH_VARIANTS.has(v) || SML_EMP_CODES.has(v);
+}
+function isKnownSMLStaffName(rawName) {
+  const v = (rawName || "").trim().toUpperCase().replace(/\s+/g, " ");
+  if (!v) return false;
+  return SML_EMP_NAMES.has(v);
+}
 
 async function fetchGoldLoanTargets() {
   try {
@@ -1127,6 +1212,156 @@ async function fetchRDOutstanding() {
   }
 }
 
+const EMP_ROSTER_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPuLZy5EEg4acZqfVl5varn3gm9BsX72-PcQiLOkecuIF03o6etD3UKknOLCYdocV72iyxWX6B2Srm/pub?gid=61545749&single=true&output=csv";
+
+/* ━━━ EMPLOYEE CODE → NAME MASTER ROSTER ━━━
+   Columns: Employee Code, Employee Name, Branch Name. This is the
+   authoritative, live source for resolving employee codes — far more
+   complete than the 42-name whitelist hand-extracted from the "sml"
+   sheet earlier (e.g. that list was missing "Teena Varghese" / 8260
+   entirely, which is exactly why some branches only had 1 of 5 staff
+   showing dues). Whenever the RD due register's Company cell holds a
+   numeric employee code (starts with "8"), we look the code up here to
+   get the CANONICAL employee name, and use that name — not the free-text
+   Staff_Name from the due register, which is where the spelling
+   mismatches were coming from — to key the due totals. */
+async function fetchEmployeeRoster() {
+  try {
+    const res = await fetch(EMP_ROSTER_CSV_URL);
+    const text = await res.text();
+    const rows = text.split('\n');
+    if (rows.length < 2) return {};
+
+    const headers = rows[0].split(',').map(h => h.trim());
+    let codeIdx   = headers.findIndex(h => /employee\s*code/i.test(h));
+    let nameIdx   = headers.findIndex(h => /employee\s*name/i.test(h));
+    let branchIdx = headers.findIndex(h => /branch\s*name/i.test(h));
+    if (codeIdx === -1)   codeIdx   = 0; // fall back to positional order: Employee Code, Employee Name, Branch Name
+    if (nameIdx === -1)   nameIdx   = 1;
+    if (branchIdx === -1) branchIdx = 2;
+
+    const roster = {};
+    for (let i = 1; i < rows.length; i++) {
+      if (!rows[i].trim()) continue;
+
+      let cols = [];
+      let current = "";
+      let inQuotes = false;
+      for (let char of rows[i]) {
+        if (char === '"') inQuotes = !inQuotes;
+        else if (char === ',' && !inQuotes) { cols.push(current); current = ""; }
+        else current += char;
+      }
+      cols.push(current);
+
+      const rawCode = (cols[codeIdx] || "").replace(/"/g,'').trim();
+      const codeNum = parseInt(rawCode, 10);
+      if (!codeNum) continue;
+      const name   = (cols[nameIdx]   || "").replace(/"/g,'').trim();
+      const branch = (cols[branchIdx] || "").replace(/"/g,'').trim();
+      if (name) roster[String(codeNum)] = { name, branch };
+    }
+    return roster;
+  } catch (e) {
+    console.error("Error fetching Employee Roster CSV:", e);
+    return {};
+  }
+}
+
+/* ━━━ RD DUE (count + amount, per-account drill-down) ━━━
+   Reads the raw per-account RD due register CSV (same shape as the
+   Branch_RD_due_MIS workbook: one row per RD account). For each row:
+     - Inst_Amount  → the account's raw monthly installment amount (₹), used AS-IS, never multiplied.
+     - Due_Amt      → the COUNT of pending/missed installments for that account.
+     - Amount Due   → Inst_Amount × Due_Amt, computed fresh per account (this is the only place multiplication happens).
+   "a/cs pending" is the COUNT OF DISTINCT DUE ACCOUNTS — NOT the sum of
+   Due_Amt across accounts. Rows are summed per staff, restricted to SML
+   rows only, and the individual due accounts are kept for the drill-down
+   modal (Share_Name, Inst_Amount, Due_Amt, Amount Due).
+   Employee identification, in priority order:
+     1. If Company holds a numeric employee code (e.g. "8079"), resolve
+        the canonical name via the EMP_ROSTER_CSV_URL master roster —
+        this is the most reliable path and fixes the majority of the
+        name-mismatch drops.
+     2. Otherwise fall back to isSMLCompany()/isKnownSMLStaffName() using
+        the raw Staff_Name column, as before. */
+async function fetchRDDue(empRoster) {
+  empRoster = empRoster || {};
+  try {
+    const res = await fetch(RD_DUE_CSV_URL);
+    const text = await res.text();
+    const rows = text.split('\n');
+    if (rows.length < 2) return {};
+
+    const headers   = rows[0].split(',').map(h => h.trim());
+    const nameIdx    = headers.indexOf('Staff_Name');
+    const compIdx     = headers.indexOf('Company');
+    const shareIdx    = headers.indexOf('Share_Name');
+    const instIdx      = headers.indexOf('Inst_Amount');
+    const dueAmtIdx    = headers.indexOf('Due_Amt');    // COUNT of pending installments
+    const statusIdx    = headers.indexOf('Depo_Status');
+    if (nameIdx === -1 || dueAmtIdx === -1) return {};
+
+    const dueMap = {};
+    for (let i = 1; i < rows.length; i++) {
+      if (!rows[i].trim()) continue;
+
+      // Custom parser to handle quotes and commas inside numbers (e.g., "5,00,000")
+      let cols = [];
+      let current = "";
+      let inQuotes = false;
+      for (let char of rows[i]) {
+        if (char === '"') inQuotes = !inQuotes;
+        else if (char === ',' && !inQuotes) { cols.push(current); current = ""; }
+        else current += char;
+      }
+      cols.push(current);
+
+      const compRaw = compIdx !== -1 ? (cols[compIdx] || "").trim() : "";
+      let name = "";
+
+      // Path 1: Company cell is a numeric employee code (starts with "8") — resolve via master roster.
+      if (/^8\d{2,}$/.test(compRaw)) {
+        const hit = empRoster[String(parseInt(compRaw, 10))];
+        if (hit && hit.name) name = hit.name.trim();
+      }
+
+      // Path 2: fall back to raw Staff_Name + company/name-based SML check.
+      if (!name) {
+        const rawName = (cols[nameIdx] || "").trim();
+        if (!rawName) continue;
+        if (!isSMLCompany(compRaw) && !isKnownSMLStaffName(rawName)) continue;
+        name = rawName;
+      }
+
+      if (statusIdx !== -1) {
+        const st = (cols[statusIdx] || "").trim().toLowerCase();
+        if (st === "terminated") continue;
+      }
+
+      const dueCntStr = (cols[dueAmtIdx] || "").replace(/,/g,'').replace(/"/g,'').trim();
+      const dueCnt = parseInt(dueCntStr, 10) || 0;
+      if (dueCnt <= 0) continue; // not currently due — skip this account entirely
+
+      const instStr = instIdx !== -1 ? (cols[instIdx] || "").replace(/,/g,'').replace(/"/g,'').trim() : "";
+      const instAmt = parseFloat(instStr) || 0;   // raw installment amount — never multiplied
+      const dueAmount = instAmt * dueCnt;          // the ONLY multiplication: Inst_Amount × Due_Amt
+
+      const shareName = shareIdx !== -1 ? (cols[shareIdx] || "").trim() : "";
+      const key = name.toLowerCase();
+      if (!dueMap[key]) dueMap[key] = { accountCount: 0, installmentTotal: 0, amount: 0, accounts: [] };
+      dueMap[key].accountCount     += 1;        // ← one per due ACCOUNT, not per installment
+      dueMap[key].installmentTotal += dueCnt;   // total pending installment-months (informational)
+      dueMap[key].amount           += dueAmount;
+      dueMap[key].accounts.push({ shareName, instAmt, dueCnt, dueAmount });
+    }
+    return dueMap;
+  } catch (e) {
+    console.error("Error fetching RD Due CSV:", e);
+    return {};
+  }
+}
+
 async function load() {
   try {
     const r = await fetch(API + "?token=" + encodeURIComponent(SESSION_TOKEN));
@@ -1146,6 +1381,24 @@ async function load() {
           }
           // Set the outstanding value
           s.metrics["RD"].outstanding = rdMap[sName];
+        }
+      });
+    });
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // ━━━ INJECT RD DUE (count + amount) FROM CSV ━━━
+    const rdDueMap = await fetchRDDue();
+    allData.forEach(b => {
+      (b.staff || []).forEach(s => {
+        const sName = s.name.trim().toLowerCase();
+        if (rdDueMap[sName] !== undefined) {
+          if (!s.metrics["RD"]) {
+            s.metrics["RD"] = { monthlyAchievement: {}, monthlyTarget: 0 };
+          }
+          s.metrics["RD"].dueCount        = rdDueMap[sName].accountCount;     // # of distinct due accounts
+          s.metrics["RD"].dueInstallments = rdDueMap[sName].installmentTotal; // total pending installment-months (informational)
+          s.metrics["RD"].dueAmount       = rdDueMap[sName].amount;
+          s.metrics["RD"].dueAccounts     = rdDueMap[sName].accounts;
         }
       });
     });
@@ -1307,6 +1560,11 @@ function initials(name) {
   return (name || "").trim().split(/\s+/).slice(0,2).map(w => w[0]?.toUpperCase() || "").join("");
 }
 
+/* Safe to drop inside a single-quoted HTML attribute — escapes stray ' */
+function attrJSON(obj) {
+  return JSON.stringify(obj).replace(/'/g, "\\u0027");
+}
+
 /* ── SHELL ── */
 function buildShell() {
   document.getElementById("mainArea").innerHTML = `
@@ -1433,6 +1691,25 @@ function renderSnap(staff, months) {
 
   const blPct = totals["BusinessLoan"] ? Math.round(totals["BusinessLoan"].ach/(totals["BusinessLoan"].tgt||1)*100) : 0;
 
+  /* ━━━ BRANCH RD DUE TOTAL — sum of every staff member's RD Due ━━━ */
+  let branchDueCount = 0, branchDueAmount = 0;
+  const branchDueStaff = [];
+  realStaff.forEach(s => {
+    const m = s.metrics["RD"];
+    if (m && m.dueCount) {
+      branchDueCount  += m.dueCount;
+      branchDueAmount += m.dueAmount || 0;
+      branchDueStaff.push({ name: s.name, count: m.dueCount, amount: m.dueAmount || 0, metric: m });
+    }
+  });
+  window.__branchDueStaff = branchDueStaff; // stash for the drill-down modal
+  const rdDueCard = branchDueCount > 0 ? `
+        <div class="mc mc-rddue" style='cursor:pointer' onclick='openBranchRDDue(${attrJSON(branch.branchName)})'>
+          <div class="ml">RD Due</div>
+          <div class="mv" style="color:#b91c1c">${fmtFull(branchDueAmount,"RD")}</div>
+          <div class="ms">${branchDueCount} a/c${branchDueCount===1?"":"s"} pending across branch ▸</div>
+        </div>` : "";
+
   document.getElementById("snap").innerHTML = `
     <div class="card">
       <div class="card-head">
@@ -1460,6 +1737,7 @@ function renderSnap(staff, months) {
           <div class="mv" style="font-size:18px">${months.length}</div>
           <div class="ms">${months.length===1?"month selected":"months selected"}</div>
         </div>
+        ${rdDueCard}
       </div>
       <div style="overflow-x:auto">
         <table>
@@ -1503,7 +1781,7 @@ function renderStaff(staff, months) {
           <span class="prod-name">${PLABEL[k]||k}</span>
           <span style="flex:1"></span>
           <span class="sc-bl-ach"
-            onclick='openBreak(${JSON.stringify(s.name)},${JSON.stringify(k)},${JSON.stringify(metric)})'>${fmtFull(r.ach,k)}</span>
+            onclick='openBreak(${attrJSON(s.name)},${attrJSON(k)},${attrJSON(metric)})'>${fmtFull(r.ach,k)}</span>
           <span class="sc-bl-note">branch tgt</span>
         </div>`;
       } else {
@@ -1530,7 +1808,7 @@ function renderStaff(staff, months) {
             </div>
             <div class="sc-amounts">
               <span class="sc-ach"
-                onclick='openBreak(${JSON.stringify(s.name)},${JSON.stringify(k)},${JSON.stringify(metric)})'>${fmtFull(r.ach,k)}</span>
+                onclick='openBreak(${attrJSON(s.name)},${attrJSON(k)},${attrJSON(metric)})'>${fmtFull(r.ach,k)}</span>
               <span class="sc-sep">/</span>
               <span class="sc-tgt-lbl">tgt&nbsp;</span><span class="sc-tgt">${fmtFull(r.tgt,k)}</span>
             </div>
@@ -1554,6 +1832,19 @@ function renderStaff(staff, months) {
             <div class="sc-out-info">
               <div class="sc-out-lbl">${cfg.label}</div>
               <div class="sc-out-val">${fmtFull(metric.outstanding,k)}</div>
+            </div>
+          </div>`;
+        }
+
+        /* RD Due pill — count + amount, click to drill down */
+        if (k === "RD" && metric.dueCount !== null && metric.dueCount !== undefined) {
+          prodsHTML += `
+          <div class="sc-outstanding out-rddue" onclick='openRDDue(${attrJSON(s.name)},${attrJSON(metric)})'>
+            <div class="sc-out-icon">⏰</div>
+            <div class="sc-out-info">
+              <div class="sc-out-lbl">RD Due<span class="sc-out-chevron">▸</span></div>
+              <div class="sc-out-val">${fmtFull(metric.dueAmount,"RD")}</div>
+              <div class="sc-out-sub">${metric.dueCount} a/c${metric.dueCount===1?"":"s"} pending</div>
             </div>
           </div>`;
         }
@@ -1812,6 +2103,21 @@ function openBreak(sname, pkey, metric) {
       </div>`;
   }
 
+  /* ━━━ RD DUE BLOCK — sits beside RD Outstanding ━━━ */
+  let dueHTML = "";
+  if (pkey === "RD" && metric.dueCount !== null && metric.dueCount !== undefined) {
+    const count = metric.dueCount || 0;
+    dueHTML = `
+      <div class="out-block rddue" style="cursor:pointer" onclick='openRDDue(${attrJSON(sname)},${attrJSON(metric)})'>
+        <div class="out-icon">⏰</div>
+        <div>
+          <div class="out-lbl">RD Due <span class="sc-out-chevron">▸</span></div>
+          <div class="out-val">${fmtFull(metric.dueAmount,"RD")}</div>
+          <div class="out-sub">${count} a/c${count===1?"":"s"} pending</div>
+        </div>
+      </div>`;
+  }
+
   document.getElementById("modalBody").innerHTML = `
     <div style="margin-bottom:10px;font-size:12px;color:var(--text3)">Monthly target: <b style="color:var(--text)">${fmt(mt)}</b></div>
     <table style="font-size:12px">
@@ -1823,7 +2129,97 @@ function openBreak(sname, pkey, metric) {
       <span>Target: <b>${fmt(r.tgt)}</b></span>
       <span style="color:${pc(r.pct)};font-weight:700">${r.pct}%</span>
     </div>
-    ${outstandingHTML}`;
+    ${outstandingHTML}
+    ${dueHTML}`;
+  document.getElementById("overlay").classList.add("open");
+}
+
+/* ── BRANCH-LEVEL RD DUE DRILL-DOWN MODAL — staff breakdown for the whole branch ── */
+function openBranchRDDue(branchName) {
+  const list = (window.__branchDueStaff || []).slice().sort((a,b) => b.amount - a.amount);
+  window.__branchDueList = list; // for row-click navigation into per-staff drill-down
+  const totalAmount = list.reduce((sum,s) => sum + s.amount, 0);
+  const totalCount  = list.reduce((sum,s) => sum + s.count, 0);
+
+  document.getElementById("modalTitle").textContent = branchName + " — RD Due (Branch)";
+  const rowsHTML = list.length ? list.map((s, idx) => `
+    <tr style="cursor:pointer" onclick="openRDDueFromBranch(${idx})">
+      <td>${s.name}</td>
+      <td style="text-align:center">${s.count}</td>
+      <td style="text-align:center;font-weight:700;color:#b91c1c">${fmtFull(s.amount,"RD")}</td>
+    </tr>`).join("") : `<tr><td colspan="3" style="text-align:center;padding:12px;color:var(--text3)">No RD dues recorded for this branch.</td></tr>`;
+
+  document.getElementById("modalBody").innerHTML = `
+    <div style="margin-bottom:10px;font-size:12px;color:var(--text3)">
+      RD Due summary across every staff member in this branch (SML only).
+    </div>
+    <div class="out-block rddue">
+      <div class="out-icon">⏰</div>
+      <div>
+        <div class="out-lbl">Branch Due Amount</div>
+        <div class="out-val">${fmtFull(totalAmount,"RD")}</div>
+        <div class="out-sub">${totalCount} a/c${totalCount===1?"":"s"} pending across ${list.length} staff member${list.length===1?"":"s"}</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">By staff member</div>
+    <div style="max-height:280px;overflow-y:auto;margin-top:6px">
+      <table style="font-size:12px;width:100%">
+        <thead><tr><th>Staff</th><th style="text-align:center">Due A/Cs</th><th style="text-align:center">Due Amount</th></tr></thead>
+        <tbody>${rowsHTML}</tbody>
+      </table>
+    </div>`;
+  document.getElementById("overlay").classList.add("open");
+}
+
+function openRDDueFromBranch(idx) {
+  const entry = (window.__branchDueList || [])[idx];
+  if (!entry) return;
+  openRDDue(entry.name, entry.metric);
+}
+
+/* ── RD DUE DRILL-DOWN MODAL ── */
+function openRDDue(sname, metric) {
+  document.getElementById("modalTitle").textContent = sname + " — RD Due";
+  const count        = metric.dueCount || 0;          // distinct due accounts
+  const installments  = metric.dueInstallments || 0;    // total pending installment-months
+  const amount        = metric.dueAmount || 0;
+  const avg    = count > 0 ? amount / count : 0;
+  const outstandingLine = (metric.outstanding !== null && metric.outstanding !== undefined)
+    ? `<span>RD Outstanding: <b>${fmt(metric.outstanding)}</b></span>` : "";
+
+  const accounts = (metric.dueAccounts || []).slice().sort((a,b) => b.dueAmount - a.dueAmount);
+  const rowsHTML = accounts.length ? accounts.map(a => `
+    <tr>
+      <td>${a.shareName || "<span style=\'color:var(--text3)\'>—</span>"}</td>
+      <td style="text-align:center">${fmtFull(a.instAmt,"RD")}</td>
+      <td style="text-align:center">${a.dueCnt}</td>
+      <td style="text-align:center;font-weight:700;color:#b91c1c">${fmtFull(a.dueAmount,"RD")}</td>
+    </tr>`).join("") : `<tr><td colspan="4" style="text-align:center;padding:12px;color:var(--text3)">No individual account details available for this staff member.</td></tr>`;
+
+  document.getElementById("modalBody").innerHTML = `
+    <div style="margin-bottom:10px;font-size:12px;color:var(--text3)">
+      Pending recurring-deposit installments not yet collected, as of the latest RD due register upload (SML only).
+    </div>
+    <div class="out-block rddue">
+      <div class="out-icon">⏰</div>
+      <div>
+        <div class="out-lbl">Due Amount</div>
+        <div class="out-val">${fmtFull(amount,"RD")}</div>
+        <div class="out-sub">${count} a/c${count===1?"":"s"} pending · ${installments} installment${installments===1?"":"s"} total · avg ${fmtFull(avg,"RD")} / a/c</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:16px;font-size:12px;flex-wrap:wrap">
+      <span>Due a/cs: <b>${count}</b></span>
+      <span>Due amount: <b>${fmt(amount)}</b></span>
+      ${outstandingLine}
+    </div>
+    <div style="margin-top:14px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Individual due accounts</div>
+    <div style="max-height:280px;overflow-y:auto;margin-top:6px">
+      <table style="font-size:12px;width:100%">
+        <thead><tr><th>Customer (Share_Name)</th><th style="text-align:center">Inst. Amount</th><th style="text-align:center">Due (installments)</th><th style="text-align:center">Amount Due</th></tr></thead>
+        <tbody>${rowsHTML}</tbody>
+      </table>
+    </div>`;
   document.getElementById("overlay").classList.add("open");
 }
 
@@ -1930,13 +2326,17 @@ function doExport() {
                       ? dispVal(exact(metric.outstanding), k) 
                       : '<span class="mu">—</span>';
 
+      const rdDue = (k === "RD" && metric.dueCount !== null && metric.dueCount !== undefined)
+                      ? `${dispVal(exact(metric.dueAmount), k)} <span class="mu">(${metric.dueCount})</span>`
+                      : '<span class="mu">—</span>';
+
       const trendTDs = YTD_MONTHS.map(m => {
         const v = exact(ma[m] || 0);
         const hi = mt > 0 && v >= mt ? " hit" : "";
         return `<td class="tc${hi}">${dispVal(v,k)}</td>`;
       }).join("");
 
-      return `<tr><td class="lc">${PLABEL_SHORT[k]||k}${isBL?' <i class="mu">br</i>':""}</td><td class="tc">${outst}</td><td>${tgt}</td><td>${ach}</td><td>${sf}</td>${trendTDs}</tr>`;
+      return `<tr><td class="lc">${PLABEL_SHORT[k]||k}${isBL?' <i class="mu">br</i>':""}</td><td class="tc">${outst}</td><td class="tc">${rdDue}</td><td>${tgt}</td><td>${ach}</td><td>${sf}</td>${trendTDs}</tr>`;
     }).join("");
   }
 
@@ -1957,6 +2357,7 @@ function doExport() {
   <table><thead><tr>
     <th class="lc">Product</th>
     <th class="tc">Outstanding</th>
+    <th class="tc">RD Due</th>
     <th>Target (${pname})</th>
     <th>Achieved (${pname})</th>
     <th>Short Fall from April</th>
