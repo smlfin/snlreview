@@ -139,6 +139,8 @@
     }
     .tb-btn.danger:hover { background: rgba(239,68,68,.25); }
     #userInfo { font-size: 11px; color: rgba(255,255,255,.4); white-space: nowrap; flex-shrink: 0; }
+    .topbar-controls { display: contents; }
+    .tb-hamburger { display: none; }
 
     /* ━━━ LAYOUT ━━━ */
     .main {
@@ -903,6 +905,208 @@
       .sc-ach { font-size: 16px; }
       .sc-outstanding { margin: 0 14px 10px; }
     }
+
+    /* ━━━ MOBILE TOPBAR MENU — collapses selects/links/buttons into a
+       dropdown behind a hamburger, instead of cramming/wrapping in one row ━━━ */
+    @media (max-width: 768px) {
+      .tb-hamburger {
+        display: flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px; flex-shrink: 0;
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 7px;
+        background: rgba(255,255,255,.10);
+        color: #fff; font-size: 17px; line-height: 1;
+        cursor: pointer;
+      }
+      .tb-hamburger:hover { background: rgba(255,255,255,.18); }
+      .tb-hamburger.open { background: rgba(255,255,255,.22); }
+
+      .topbar-controls {
+        display: none;
+        position: fixed;
+        top: 50px; left: 0; right: 0;
+        background: var(--navy);
+        flex-direction: column;
+        align-items: stretch;
+        gap: 9px;
+        padding: 14px 14px 20px;
+        max-height: calc(100vh - 50px);
+        overflow-y: auto;
+        box-shadow: 0 10px 24px rgba(15,23,80,.4);
+        z-index: 399;
+        -webkit-overflow-scrolling: touch;
+      }
+      .topbar-controls.open { display: flex; }
+      .topbar-controls .nav-link,
+      .topbar-controls select,
+      .topbar-controls .tb-btn {
+        width: 100%;
+        box-sizing: border-box;
+        text-align: center;
+        padding: 11px 14px;
+        font-size: 13px;
+      }
+      .topbar-controls #adminReportLink { display: block; }
+      .topbar-controls #adminReportLink .nav-link { display: block; margin-bottom: 9px; }
+      .topbar-controls #adminReportLink .nav-link:last-child { margin-bottom: 0; }
+      .topbar-controls #userInfo {
+        text-align: center; padding: 4px 0 2px;
+        border-top: 1px solid rgba(255,255,255,.12);
+        margin-top: 3px; padding-top: 10px;
+      }
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       EMPLOYEE PROFILE — additive only, does not alter any
+       existing rule above. Uses its own overlay/modal ids.
+       Full-screen popup, figures only — no bars/graphs.
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    #profOverlay { padding: 0; }
+    .modal-full {
+      width: 100vw; height: 100vh;
+      max-width: 100vw; max-height: 100vh;
+      border-radius: 0;
+      display: flex; flex-direction: column;
+    }
+    .modal-full .modal-head { border-radius: 0; flex-shrink: 0; }
+    .modal-full .modal-body { flex: 1; overflow-y: auto; padding: 20px 22px 40px; }
+    .prof-scroll-inner { max-width: 900px; margin: 0 auto; }
+
+    .prof-search {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border2);
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--surf2);
+      color: var(--text);
+    }
+    .prof-search:focus { outline: none; border-color: var(--navy3); }
+    .prof-pick-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 8px;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      transition: background .12s;
+      max-width: 560px;
+    }
+    .prof-pick-row:hover { background: var(--surf3); }
+    .prof-pick-row + .prof-pick-row { border-top: 1px solid var(--border); }
+
+    .prof-back {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--navy3);
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+    .prof-back:hover { text-decoration: underline; }
+
+    .prof-head {
+      display: flex; align-items: center; gap: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .prof-name { font-size: 19px; font-weight: 700; color: var(--text); }
+    .prof-meta-grid {
+      display: flex; flex-wrap: wrap; gap: 4px 22px;
+      margin-top: 6px;
+    }
+    .prof-meta-item { font-size: 12px; color: var(--text2); }
+    .prof-meta-item b { color: var(--text); font-weight: 600; }
+    .prof-rank-pill { font-size: 24px; font-weight: 800; line-height: 1; }
+
+    .prof-stats-grid {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
+      margin-bottom: 4px;
+    }
+    .prof-stat {
+      background: var(--surf2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 10px;
+      text-align: center;
+    }
+    .prof-stat-v { font-size: 15px; font-weight: 700; color: var(--text); }
+    .prof-stat-l { font-size: 10px; color: var(--text3); margin-top: 3px; font-weight: 500; }
+
+    .prof-insight-box {
+      background: var(--surf2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 4px 12px;
+    }
+    .prof-insight-row {
+      padding: 8px 0;
+      font-size: 12.5px;
+      color: var(--text2);
+      line-height: 1.5;
+    }
+    .prof-insight-row + .prof-insight-row { border-top: 1px dashed var(--border); }
+    .prof-insight-row b { color: var(--text); }
+
+    /* ── Outstanding summary cards (figures only) ── */
+    .prof-outstanding-grid {
+      display: grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap: 10px;
+    }
+    .prof-out-card {
+      background: var(--surf2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 10px 12px;
+    }
+    .prof-out-card .lbl { font-size: 10px; text-transform: uppercase; color: var(--text3); font-weight: 600; letter-spacing: .05em; }
+    .prof-out-card .val { font-size: 16px; font-weight: 700; color: var(--text); margin-top: 3px; }
+    .prof-out-card .sub { font-size: 10.5px; color: var(--text3); margin-top: 2px; }
+    .prof-out-card.due { cursor: pointer; }
+    .prof-out-card.due:hover { border-color: var(--border2); }
+
+    /* ── Per-product detail block ── */
+    .prof-detail-block {
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .prof-detail-head {
+      background: var(--surf2);
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 13px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .prof-detail-body { padding: 14px; }
+    .prof-subhead {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text3); margin: 14px 0 8px;
+    }
+    .prof-subhead:first-child { margin-top: 0; }
+
+    .prof-figure-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .prof-figure-table th {
+      text-align: right; padding: 6px 8px; font-size: 10px; text-transform: uppercase;
+      letter-spacing: .04em; color: var(--text3); border-bottom: 1px solid var(--border2);
+    }
+    .prof-figure-table th:first-child { text-align: left; }
+    .prof-figure-table td { padding: 7px 8px; text-align: right; border-bottom: 1px solid var(--border); }
+    .prof-figure-table td:first-child { text-align: left; font-weight: 600; }
+    .prof-figure-table tr:last-child td { border-bottom: none; }
+    .prof-figure-table tr.total-row td { font-weight: 700; background: var(--surf2); }
+    .prof-gap-pos { color: var(--green); font-weight: 700; }
+    .prof-gap-neg { color: var(--red); font-weight: 700; }
+    .prof-gap-neu { color: var(--text2); font-weight: 700; }
+
+    @media (max-width: 640px) {
+      .modal-full .modal-body { padding: 14px 12px 32px; }
+      .prof-stats-grid { grid-template-columns: 1fr 1fr; }
+      .prof-figure-table { font-size: 11px; }
+      .prof-figure-table th, .prof-figure-table td { padding: 5px 5px; }
+    }
   </style>
 </head>
 <body>
@@ -910,20 +1114,24 @@
 <!-- ━━━ TOPBAR ━━━ -->
 <div class="topbar">
   <h1>Branch Review Dashboard</h1>
-  <a class='nav-link' href='/staff_dashboard'>Staff Productivity</a>
-  <span id="adminReportLink" style="display:none">
-    <a class='nav-link admin-link' href='/admin_report'>📋 Admin Report</a>
-    <a href="#" onclick="openSNLReview();return false;" class="nav-link admin-link">🏢 SNL Review</a>
-  </span>
-  <select id="branchSel" onchange="onBranch()" style="display:none"></select>
-  <select id="modeSel" onchange="onMode()">
-    <option value="all">All staff</option>
-    <option value="single">Individual</option>
-  </select>
-  <select id="staffSel" style="display:none" onchange="render()"></select>
-  <span id="userInfo"></span>
-  <button class="tb-btn" onclick="doExport()">↓ Export</button>
-  <button class="tb-btn danger" onclick="doLogout()">Logout</button>
+  <button class="tb-hamburger" id="tbHamburger" onclick="toggleTopbarMenu()" aria-label="Menu">☰</button>
+  <div class="topbar-controls" id="topbarControls">
+    <a class='nav-link' href='/staff_dashboard'>Staff Productivity</a>
+    <span id="adminReportLink" style="display:none">
+      <a class='nav-link admin-link' href='/admin_report'>📋 Admin Report</a>
+      <a href="#" onclick="openSNLReview();return false;" class="nav-link admin-link">🏢 SNL Review</a>
+    </span>
+    <select id="branchSel" onchange="onBranch();closeTopbarMenu()" style="display:none"></select>
+    <select id="modeSel" onchange="onMode();closeTopbarMenu()">
+      <option value="all">All staff</option>
+      <option value="single">Individual</option>
+    </select>
+    <select id="staffSel" style="display:none" onchange="render();closeTopbarMenu()"></select>
+    <span id="userInfo"></span>
+    <button class="tb-btn" onclick="openProfilePicker();closeTopbarMenu()">👤 Employee Profile</button>
+    <button class="tb-btn" onclick="doExport();closeTopbarMenu()">↓ Export</button>
+    <button class="tb-btn danger" onclick="doLogout()">Logout</button>
+  </div>
 </div>
 
 <div class="main" id="mainArea">
@@ -939,6 +1147,18 @@
     <div class="modal-body" id="modalBody"></div>
   </div>
 </div>
+
+<!-- ━━━ EMPLOYEE PROFILE — dedicated overlay, independent of the modal above ━━━ -->
+<div class="overlay" id="profOverlay" onclick="maybeCloseProfile(event)">
+  <div class="modal modal-full" id="profModal">
+    <div class="modal-head">
+      <h3 id="profModalTitle">Employee Profile</h3>
+      <button class="mclose" onclick="closeProfileModal()">×</button>
+    </div>
+    <div class="modal-body" id="profModalBody"></div>
+  </div>
+</div>
+
 
 <script>
 /* ── SSO SEED ──
@@ -965,6 +1185,32 @@ const API      = "https://script.google.com/macros/s/AKfycbzy_um_SLPLkZAEvEjYGKR
 const AUTH_URL = "https://script.google.com/macros/s/AKfycbzTPB10fdiNYo2mRF_pIsUuPfOhFW02_omSZYCPhPq_ybtVYqz5HWrbB7ia7C4lb5j7-g/exec";
 
 const MONTHS = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+/* ━━━ DOJ-BASED TARGET PRORATION ━━━
+   Staff who joined ON OR AFTER 01-Apr-2026 should have their target calculated
+   only for full actual months worked — the joining month itself is excluded
+   (e.g. joined 10-May-2026 → target starts from Jun onwards).
+   Staff who joined before 01-Apr-2026 are unaffected (full period target applies). */
+const FY_TARGET_START = new Date(2026, 3, 1); // 01-Apr-2026
+
+function parseDOJDate(dojStr) {
+  if (!dojStr) return null;
+  const parts = dojStr.split("-");
+  if (parts.length !== 3) return null;
+  const d = new Date(`${parts[1]} ${parts[0]}, ${parts[2]}`);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/* Given a staff's DOJ string and a list of month labels (subset of MONTHS),
+   returns the subset of months that should count toward target for that staff. */
+function getEffectiveMonths(dojStr, months) {
+  const dojDate = parseDOJDate(dojStr);
+  if (!dojDate || dojDate < FY_TARGET_START) return months; // no proration needed
+  const dojMonthAbbr = dojDate.toLocaleString('en-US', { month: 'short' });
+  const dojIdx = MONTHS.indexOf(dojMonthAbbr);
+  if (dojIdx === -1) return []; // joined outside the tracked Apr–Dec window (e.g. next FY) — no target yet
+  return months.filter(m => MONTHS.indexOf(m) > dojIdx);
+}
 
 const PLABEL = {
   Investment:   "Investment",
@@ -1512,10 +1758,11 @@ function onMode() {
   render();
 }
 
-function calc(metric, months) {
+function calc(metric, months, doj) {
+  const useMonths = doj ? getEffectiveMonths(doj, months) : months;
   let ach = 0;
-  months.forEach(m => ach += (metric.monthlyAchievement[m] || 0));
-  const tgt = (metric.monthlyTarget || 0) * months.length;
+  useMonths.forEach(m => ach += (metric.monthlyAchievement[m] || 0));
+  const tgt = (metric.monthlyTarget || 0) * useMonths.length;
   const pct = tgt > 0 ? Math.round(ach / tgt * 100) : 0;
   return { ach, tgt, pct, gap: ach - tgt };
 }
@@ -1642,7 +1889,7 @@ function renderSnap(staff, months) {
       if (!totals[k]) totals[k] = { tgt: 0, ach: 0 };
       const metric = s.metrics[k];
       months.forEach(m => { totals[k].ach += (metric.monthlyAchievement[m] || 0); });
-      if (k !== "BusinessLoan") { totals[k].tgt += (metric.monthlyTarget || 0) * months.length; }
+      if (k !== "BusinessLoan") { totals[k].tgt += (metric.monthlyTarget || 0) * getEffectiveMonths(s.doj, months).length; }
     }
   });
   if (totals["BusinessLoan"]) {
@@ -1663,7 +1910,7 @@ function renderSnap(staff, months) {
       if (k === "BusinessLoan") continue;
       const metric = s.metrics[k];
       months.forEach(m => { sa += (metric.monthlyAchievement[m] || 0); });
-      st += (metric.monthlyTarget || 0) * months.length;
+      st += (metric.monthlyTarget || 0) * getEffectiveMonths(s.doj, months).length;
     }
     if (st > 0 && sa >= st) onTgt++;
   });
@@ -1769,7 +2016,7 @@ function renderStaff(staff, months) {
     let prodsHTML = "";
 
     for (let k in s.metrics) {
-      const r      = calc(s.metrics[k], months);
+      const r      = calc(s.metrics[k], months, s.doj);
       const metric = s.metrics[k];
       const dot    = PROD_COLOR[k] || "#94a3b8";
 
@@ -1791,7 +2038,7 @@ function renderStaff(staff, months) {
         const gapStr = r.gap >= 0 ? "+" + fmtFull(r.gap, k) : fmtFull(r.gap, k);
 
         /* YTD gap */
-        const ytdR    = calc(metric, ytdMonths);
+        const ytdR    = calc(metric, ytdMonths, s.doj);
         const ytdGap  = ytdR.gap;
         const ytdCls  = ytdGap > 0 ? "pos" : ytdGap < 0 ? "neg" : "neu";
         const ytdStr  = ytdGap >= 0 ? "+" + fmtFull(ytdGap, k) : fmtFull(ytdGap, k);
@@ -1900,7 +2147,7 @@ function renderRank(staff, months) {
     let a = 0, t = 0;
     for (let k in s.metrics) {
       if (k === "BusinessLoan") continue;
-      const r = calc(s.metrics[k], months); a += r.ach; t += r.tgt;
+      const r = calc(s.metrics[k], months, s.doj); a += r.ach; t += r.tgt;
     }
     return { name: s.name, ach: a, tgt: t, pct: t > 0 ? Math.round(a/t*100) : 0 };
   }).sort((a,b) => b.pct - a.pct);
@@ -1943,7 +2190,7 @@ function renderRank(staff, months) {
       });
     } else {
       const ps = staff.map(s => {
-        const r = s.metrics[p] ? calc(s.metrics[p], months) : {ach:0,tgt:0,pct:0,gap:0};
+        const r = s.metrics[p] ? calc(s.metrics[p], months, s.doj) : {ach:0,tgt:0,pct:0,gap:0};
         return { name: s.name, ...r };
       }).sort((a,b) => b.pct - a.pct);
       ps.forEach((s,i) => {
@@ -1968,7 +2215,7 @@ function renderCorrective(staff, months) {
   staff.forEach(s => {
     for (let k in s.metrics) {
       if (k === "BusinessLoan") continue;
-      const r = calc(s.metrics[k], months);
+      const r = calc(s.metrics[k], months, s.doj);
       if (r.pct < 100) actions.push({ staff: s.name, product: k, pct: r.pct, ach: r.ach, tgt: r.tgt, gap: r.gap });
     }
   });
@@ -2070,7 +2317,8 @@ function renderTrend(staff, months) {
 function openBreak(sname, pkey, metric) {
   document.getElementById("modalTitle").textContent = sname + " — " + (PLABEL[pkey]||pkey);
   const months = getMonths();
-  const r  = calc(metric, months);
+  const dojForStaff = (branch.staff || []).find(x => x.name === sname)?.doj;
+  const r  = calc(metric, months, dojForStaff);
   const mt = metric.monthlyTarget || 0;
   let rows = MONTHS.map((m, idx) => {
     const v   = metric.monthlyAchievement[m] || 0;
@@ -2226,6 +2474,303 @@ function openRDDue(sname, metric) {
 function maybeClose(e) { if (e.target === document.getElementById("overlay")) closeModal(); }
 function closeModal()   { document.getElementById("overlay").classList.remove("open"); }
 
+function toggleTopbarMenu() {
+  const panel = document.getElementById("topbarControls");
+  const btn   = document.getElementById("tbHamburger");
+  if (!panel) return;
+  panel.classList.toggle("open");
+  if (btn) {
+    const isOpen = panel.classList.contains("open");
+    btn.classList.toggle("open", isOpen);
+    btn.textContent = isOpen ? "✕" : "☰";
+  }
+}
+function closeTopbarMenu() {
+  const panel = document.getElementById("topbarControls");
+  const btn   = document.getElementById("tbHamburger");
+  if (!panel) return;
+  panel.classList.remove("open");
+  if (btn) { btn.classList.remove("open"); btn.textContent = "☰"; }
+}
+window.addEventListener("resize", () => { if (window.innerWidth > 768) closeTopbarMenu(); });
+
+/* ══════════════════════════════════════════════════════════════
+   EMPLOYEE PROFILE
+   New, self-contained feature — uses its own #profOverlay/#profModal
+   and does not read from or modify any existing modal/export logic.
+   Reuses existing helpers (calc, fmt, fmtFull, pc, bc, PLABEL,
+   OUT_CFG, PROD_COLOR, initials, attrJSON) purely for consistency.
+══════════════════════════════════════════════════════════════ */
+
+/* Picker: list every staff member in the currently selected branch */
+function openProfilePicker() {
+  if (!branch) return;
+  document.getElementById("profModalTitle").textContent = "Employee Profile";
+  const list = (branch.staff || [])
+    .filter(s => (s.name || "").toUpperCase() !== "TOTAL")
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name));
+  window.__profileStaffList = list;
+  renderProfilePickerList(list);
+  document.getElementById("profOverlay").classList.add("open");
+}
+
+function profPickRowHTML(s) {
+  return `
+    <div class="prof-pick-row" onclick='openStaffProfile(${attrJSON(s.name)})'>
+      <div class="avatar" style="width:34px;height:34px;font-size:12px">${initials(s.name)}</div>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:12.5px">${s.name}</div>
+        ${s.doj ? `<div style="font-size:10.5px;color:var(--text3)">DOJ: ${s.doj}</div>` : ""}
+      </div>
+      <span style="color:var(--text3);font-size:14px">›</span>
+    </div>`;
+}
+
+function renderProfilePickerList(list) {
+  const rows = list.length ? list.map(profPickRowHTML).join("") : `<div class="empty">No staff found.</div>`;
+  document.getElementById("profModalBody").innerHTML = `
+    <input type="text" id="profSearch" placeholder="🔍 Search staff by name…" class="prof-search" oninput="filterProfileList(this.value)">
+    <div id="profPickList" style="margin-top:10px">${rows}</div>`;
+}
+
+function filterProfileList(q) {
+  q = (q || "").trim().toLowerCase();
+  const list = (window.__profileStaffList || []).filter(s => s.name.toLowerCase().includes(q));
+  document.getElementById("profPickList").innerHTML =
+    list.length ? list.map(profPickRowHTML).join("") : `<div class="empty">No match.</div>`;
+}
+
+function closeProfileModal() { document.getElementById("profOverlay").classList.remove("open"); }
+function maybeCloseProfile(e) { if (e.target === document.getElementById("profOverlay")) closeProfileModal(); }
+
+/* Full insightful profile for a single staff member */
+function openStaffProfile(sname) {
+  const s = (branch.staff || []).find(x => x.name === sname);
+  if (!s) return;
+  document.getElementById("profModalTitle").textContent = "👤 " + sname;
+
+  const months = getMonths();
+  const lastSelMonth = [...months].sort((a, b) => MONTHS.indexOf(a) - MONTHS.indexOf(b)).at(-1) || MONTHS[MONTHS.length - 1];
+  const periodLabel = months.length === 1 ? months[0] : months.join("+");
+
+  /* Peer scores for ranking, excluding Business Loan (branch-level target, not individual) */
+  const peers = (branch.staff || []).filter(x => (x.name || "").toUpperCase() !== "TOTAL");
+  const scores = peers.map(x => {
+    let a = 0, t = 0;
+    for (let k in x.metrics) {
+      if (k === "BusinessLoan") continue;
+      const r = calc(x.metrics[k], months, x.doj); a += r.ach; t += r.tgt;
+    }
+    return { name: x.name, pct: t > 0 ? Math.round(a / t * 100) : 0 };
+  }).sort((a, b) => b.pct - a.pct);
+  const rankIdx = scores.findIndex(x => x.name === sname);
+  const rankPos = rankIdx >= 0 ? rankIdx + 1 : "-";
+
+  /* Per-product summary for this staff member */
+  let overallAch = 0, overallTgt = 0;
+  const prodSummaries = [];
+  for (let k in s.metrics) {
+    const metric = s.metrics[k];
+    if (k === "BusinessLoan") {
+      let ach = 0; months.forEach(m => ach += (metric.monthlyAchievement[m] || 0));
+      prodSummaries.push({ key: k, label: PLABEL[k] || k, ach, tgt: null, pct: null, gap: null, metric });
+      continue;
+    }
+    const r = calc(metric, months, s.doj);
+    overallAch += r.ach; overallTgt += r.tgt;
+    prodSummaries.push({ key: k, label: PLABEL[k] || k, ach: r.ach, tgt: r.tgt, pct: r.pct, gap: r.gap, metric });
+  }
+  const overallPct = overallTgt > 0 ? Math.round(overallAch / overallTgt * 100) : 0;
+
+  const rated   = prodSummaries.filter(p => p.pct !== null);
+  const onTgt   = rated.filter(p => p.pct >= 100).length;
+  const atRisk  = rated.filter(p => p.pct < 75).length;
+  const best    = rated.slice().sort((a, b) => b.pct - a.pct)[0];
+  const worst   = rated.slice().sort((a, b) => a.pct - b.pct)[0];
+
+  /* DOJ / tenure */
+  let tenureStr = "", dojStr = "";
+  if (s.doj) {
+    dojStr = s.doj;
+    const parts   = s.doj.split("-");
+    const dojDate = new Date(`${parts[1]} ${parts[0]} ${parts[2]}`);
+    const yrs     = (Date.now() - dojDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    tenureStr = yrs < 1 ? `${Math.round(yrs * 12)} month${Math.round(yrs * 12) === 1 ? "" : "s"}` : `${yrs.toFixed(1)} years`;
+  }
+
+  /* RD Due roll-up */
+  const rd        = s.metrics["RD"];
+  const rdDueAmt  = rd && rd.dueAmount ? rd.dueAmount : 0;
+  const rdDueCnt  = rd && rd.dueCount  ? rd.dueCount  : 0;
+
+  /* ── Auto-generated insight bullets ── */
+  let insights = [];
+  insights.push(rankPos !== "-"
+    ? `Ranked <b>#${rankPos}</b> of ${scores.length} in branch for ${periodLabel} (<b>${overallPct}%</b> overall attainment).`
+    : `Overall attainment for ${periodLabel}: <b>${overallPct}%</b>.`);
+  if (best && best.pct !== undefined)
+    insights.push(`Strongest in <b>${best.label}</b> at <b>${best.pct}%</b>${best.gap >= 0 ? ` (+${fmtFull(best.gap, best.key)} above target)` : ""}.`);
+  if (worst && worst.pct < 100)
+    insights.push(`<b>${worst.label}</b> needs attention — <b>${worst.pct}%</b> attainment, gap of ${fmtFull(Math.abs(worst.gap), worst.key)}.`);
+  if (atRisk > 0) insights.push(`⚠️ ${atRisk} of ${rated.length} products are below 75% attainment.`);
+  else if (rated.length > 0 && onTgt === rated.length) insights.push(`✅ Meeting or exceeding target across all ${rated.length} rated products.`);
+  if (rdDueAmt > 0) insights.push(`⏰ ${rdDueCnt} RD account${rdDueCnt === 1 ? "" : "s"} pending collection, worth ${fmtFull(rdDueAmt, "RD")}.`);
+  if (tenureStr) insights.push(`On the team for <b>${tenureStr}</b> (joined ${dojStr}).`);
+
+  const insightHTML = insights.map(t => `<div class="prof-insight-row">${t}</div>`).join("");
+
+  /* ── Products & Outstanding summary (figures only) ── */
+  const ytdMonths = MONTHS.slice(0, MONTHS.indexOf(lastSelMonth) + 1);
+  /* Restrict displayed months to those on/after the staff's actual joining month */
+  const profileMonths = getEffectiveMonths(s.doj, ytdMonths);
+  const ytdLabel  = profileMonths.length === 0 ? "—"
+                    : profileMonths.length === 1 ? profileMonths[0]
+                    : `${profileMonths[0]}–${lastSelMonth}`;
+
+  let outCardsHTML = "";
+  prodSummaries.forEach(p => {
+    if (OUT_CFG[p.key] && p.metric.outstanding !== null && p.metric.outstanding !== undefined) {
+      outCardsHTML += `
+        <div class="prof-out-card">
+          <div class="lbl">${p.label} — ${OUT_CFG[p.key].label}</div>
+          <div class="val">${fmtFull(p.metric.outstanding, p.key)}</div>
+        </div>`;
+    }
+  });
+  if (rdDueCnt > 0) {
+    outCardsHTML += `
+      <div class="prof-out-card due" onclick='openRDDue(${attrJSON(sname)},${attrJSON(rd)})'>
+        <div class="lbl">RD Due ›</div>
+        <div class="val">${fmtFull(rdDueAmt, "RD")}</div>
+        <div class="sub">${rdDueCnt} a/c${rdDueCnt === 1 ? "" : "s"} pending</div>
+      </div>`;
+  }
+  const outstandingHTML = outCardsHTML
+    ? `<div class="prof-outstanding-grid">${outCardsHTML}</div>`
+    : `<div class="empty" style="padding:16px">No outstanding balances recorded for this staff member.</div>`;
+
+  /* ── Per-product full detail — This Month / YTD / month-wise, figures only ── */
+  const prodDetailHTML = prodSummaries.map(p => {
+    const dot = PROD_COLOR[p.key] || "#94a3b8";
+    let statsHTML, tableHTML;
+
+    if (p.key === "BusinessLoan") {
+      const thisMonthAch = (p.metric.monthlyAchievement[lastSelMonth] || 0);
+      let ytdAch = 0; profileMonths.forEach(m => ytdAch += (p.metric.monthlyAchievement[m] || 0));
+      statsHTML = `
+        <div class="prof-subhead">This Month (${lastSelMonth})</div>
+        <div class="prof-stats-grid" style="grid-template-columns:1fr">
+          <div class="prof-stat"><div class="prof-stat-v">${fmtFull(thisMonthAch, p.key)}</div><div class="prof-stat-l">Achievement</div></div>
+        </div>
+        <div class="prof-subhead">YTD (${ytdLabel})</div>
+        <div class="prof-stats-grid" style="grid-template-columns:1fr">
+          <div class="prof-stat"><div class="prof-stat-v">${fmtFull(ytdAch, p.key)}</div><div class="prof-stat-l">Achievement</div></div>
+        </div>
+        <div style="font-size:10.5px;color:var(--text3);margin-top:6px">Business Loan target is set at branch level, not per staff member.</div>`;
+      const rows = profileMonths.map(m => `
+        <tr><td>${m}</td><td>${fmtFull(p.metric.monthlyAchievement[m] || 0, p.key)}</td></tr>`).join("");
+      tableHTML = `
+        <div class="prof-subhead">Month-wise Achievement — ${profileMonths.length ? profileMonths[0] : "—"} Onwards</div>
+        <table class="prof-figure-table">
+          <thead><tr><th>Month</th><th>Achievement</th></tr></thead>
+          <tbody>${rows || `<tr><td colspan="2" style="text-align:center;color:var(--text3)">No months yet since joining</td></tr>`}</tbody>
+        </table>`;
+    } else {
+      const tm  = calc(p.metric, [lastSelMonth], s.doj);
+      const ytd = calc(p.metric, ytdMonths, s.doj);
+      const gapClass = v => v > 0 ? "prof-gap-pos" : v < 0 ? "prof-gap-neg" : "prof-gap-neu";
+      statsHTML = `
+        <div class="prof-subhead">This Month (${lastSelMonth})</div>
+        <div class="prof-stats-grid">
+          <div class="prof-stat"><div class="prof-stat-v">${fmtFull(tm.tgt, p.key)}</div><div class="prof-stat-l">Target</div></div>
+          <div class="prof-stat"><div class="prof-stat-v">${fmtFull(tm.ach, p.key)}</div><div class="prof-stat-l">Performance</div></div>
+          <div class="prof-stat"><div class="prof-stat-v ${gapClass(tm.gap)}">${tm.gap >= 0 ? "+" : ""}${fmtFull(tm.gap, p.key)}</div><div class="prof-stat-l">Gap</div></div>
+        </div>
+        <div class="prof-subhead">YTD (${ytdLabel})</div>
+        <div class="prof-stats-grid">
+          <div class="prof-stat"><div class="prof-stat-v">${fmtFull(ytd.tgt, p.key)}</div><div class="prof-stat-l">Target</div></div>
+          <div class="prof-stat"><div class="prof-stat-v">${fmtFull(ytd.ach, p.key)}</div><div class="prof-stat-l">Performance</div></div>
+          <div class="prof-stat"><div class="prof-stat-v ${gapClass(ytd.gap)}">${ytd.gap >= 0 ? "+" : ""}${fmtFull(ytd.gap, p.key)}</div><div class="prof-stat-l">Gap</div></div>
+        </div>`;
+      if (p.key === "RD" && p.metric.dueCount !== null && p.metric.dueCount !== undefined) {
+        statsHTML += `
+        <div class="prof-subhead">RD Due (as on date)</div>
+        <div class="prof-stats-grid">
+          <div class="prof-stat"><div class="prof-stat-v">${p.metric.dueCount || 0}</div><div class="prof-stat-l">Accounts Due</div></div>
+          <div class="prof-stat"><div class="prof-stat-v">${p.metric.dueInstallments || 0}</div><div class="prof-stat-l">Installments Due</div></div>
+          <div class="prof-stat"><div class="prof-stat-v prof-gap-neg">${fmtFull(p.metric.dueAmount || 0, "RD")}</div><div class="prof-stat-l">Amount Due</div></div>
+        </div>
+        <div style="margin-top:8px">
+          <span class="prof-out-card due" style="display:inline-block;cursor:pointer" onclick='openRDDue(${attrJSON(sname)},${attrJSON(p.metric)})'>
+            <span class="lbl">View account-wise RD Due list ›</span>
+          </span>
+        </div>`;
+      }
+      const rows = profileMonths.map(m => {
+        const v    = p.metric.monthlyAchievement[m] || 0;
+        const mt   = p.metric.monthlyTarget || 0;
+        const gap  = v - mt;
+        const pct  = mt > 0 ? Math.round(v / mt * 100) : 0;
+        return `<tr>
+          <td>${m}</td>
+          <td>${fmtFull(mt, p.key)}</td>
+          <td>${fmtFull(v, p.key)}</td>
+          <td class="${gapClass(gap)}">${gap >= 0 ? "+" : ""}${fmtFull(gap, p.key)}</td>
+          <td>${pct}%</td>
+        </tr>`;
+      }).join("");
+      tableHTML = `
+        <div class="prof-subhead">Month-wise — ${profileMonths.length ? profileMonths[0] : "—"} Onwards</div>
+        <table class="prof-figure-table">
+          <thead><tr><th>Month</th><th>Target</th><th>Achievement</th><th>Gap</th><th>Attainment</th></tr></thead>
+          <tbody>${rows || `<tr><td colspan="5" style="text-align:center;color:var(--text3)">No months yet since joining</td></tr>`}</tbody>
+        </table>`;
+    }
+
+    return `
+    <div class="prof-detail-block">
+      <div class="prof-detail-head"><span class="prod-dot" style="background:${dot}"></span>${p.label}</div>
+      <div class="prof-detail-body">
+        ${statsHTML}
+        ${tableHTML}
+      </div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("profModalBody").innerHTML = `
+    <div class="prof-scroll-inner">
+      <div class="prof-back" onclick="openProfilePicker()">‹ All staff</div>
+
+      <div class="prof-head">
+        <div class="avatar" style="width:56px;height:56px;font-size:19px">${initials(sname)}</div>
+        <div style="flex:1;min-width:200px">
+          <div class="prof-name">${sname}</div>
+          <div class="prof-meta-grid">
+            <span class="prof-meta-item">Branch: <b>${branch.branchName || "—"}</b></span>
+            <span class="prof-meta-item">DOJ: <b>${dojStr || "—"}</b></span>
+            <span class="prof-meta-item">Service: <b>${tenureStr || "—"}</b></span>
+          </div>
+        </div>
+        <div style="text-align:center">
+          <div class="prof-rank-pill" style="color:${pc(overallPct)}">${overallPct}%</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">Rank #${rankPos} of ${scores.length}</div>
+        </div>
+      </div>
+
+      <div class="sec-label"><span class="sec-dot" style="background:var(--navy3)"></span>Products &amp; Outstanding</div>
+      ${outstandingHTML}
+
+      <div class="sec-label" style="margin-top:18px"><span class="sec-dot" style="background:var(--navy3)"></span>Product-wise Detail</div>
+      ${prodDetailHTML}
+
+      <div class="sec-label"><span class="sec-dot" style="background:#f59e0b"></span>Key Insights</div>
+      <div class="prof-insight-box">${insightHTML}</div>
+    </div>`;
+
+  document.getElementById("profOverlay").classList.add("open");
+}
+
 /* ── EXPORT ── */
 function doExport() {
   if (!branch) return;
@@ -2263,10 +2808,11 @@ function doExport() {
     return num < 0 ? `<span class="neg">${v}</span>` : `<span class="pos">+${v.replace(/^₹/,"")}</span>`;
   }
 
-  function calcYTD(metric) {
+  function calcYTD(metric, doj) {
+    const useYTD = doj ? getEffectiveMonths(doj, YTD_MONTHS) : YTD_MONTHS;
     let ytdAch = 0;
-    YTD_MONTHS.forEach(m => ytdAch += (metric.monthlyAchievement[m] || 0));
-    const ytdTgt = (metric.monthlyTarget || 0) * YTD_MONTHS.length;
+    useYTD.forEach(m => ytdAch += (metric.monthlyAchievement[m] || 0));
+    const ytdTgt = (metric.monthlyTarget || 0) * useYTD.length;
     return { ytdAch: exact(ytdAch), ytdTgt: exact(ytdTgt), shortfall: exact(ytdAch - ytdTgt) };
   }
 
@@ -2275,8 +2821,8 @@ function doExport() {
   staff.forEach(s => {
     for (let k in s.metrics) {
       if (!totals[k]) totals[k] = { ach:0, tgt:0, ytdAch:0, ytdTgt:0 };
-      const r   = calc(s.metrics[k], months);
-      const ytd = calcYTD(s.metrics[k]);
+      const r   = calc(s.metrics[k], months, s.doj);
+      const ytd = calcYTD(s.metrics[k], s.doj);
       totals[k].ach    += exact(r.ach);
       totals[k].ytdAch += ytd.ytdAch;
       if (k !== "BusinessLoan") { totals[k].tgt += exact(r.tgt); totals[k].ytdTgt += ytd.ytdTgt; }
@@ -2312,8 +2858,8 @@ function doExport() {
   function buildCombinedRows(s) {
     return Object.keys(s.metrics).map(k => {
       const metric = s.metrics[k];
-      const r      = calc(metric, months);
-      const ytd    = calcYTD(metric);
+      const r      = calc(metric, months, s.doj);
+      const ytd    = calcYTD(metric, s.doj);
       const isBL   = k === "BusinessLoan";
       const ma     = metric.monthlyAchievement || {};
       const mt     = metric.monthlyTarget || 0;
