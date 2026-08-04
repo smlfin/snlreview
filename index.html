@@ -268,6 +268,9 @@
     .mc.mc-rddue { background: #fef2f2; }
     .mc.mc-rddue::after { background: linear-gradient(180deg,#f87171,#b91c1c); }
     .mc.mc-rddue:hover { box-shadow: 0 2px 10px rgba(220,38,38,.18); }
+    .mc.mc-closing { background: #eef2ff; }
+    .mc.mc-closing::after { background: linear-gradient(180deg,#818cf8,#4338ca); }
+    .mc.mc-closing:hover { box-shadow: 0 2px 10px rgba(67,56,202,.18); }
     .ml { font-size: 10px; color: var(--text3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
     .mv { font-size: 22px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
     .ms { font-size: 10px; color: var(--text3); margin-top: 3px; }
@@ -636,6 +639,15 @@
     }
     .sc-out-chevron { font-size: 11px; color: #b91c1c; opacity: .55; margin-left: 4px; }
 
+    /* Closing pill — sits beside RD Due, clickable drill-down */
+    .sc-outstanding.out-closing { background: #eef2ff; border-color: #c7d2fe; cursor: pointer; transition: box-shadow .15s, transform .15s; }
+    .sc-outstanding.out-closing:hover { box-shadow: 0 2px 8px rgba(67,56,202,.18); transform: translateY(-1px); }
+    .out-closing .sc-out-icon { background: #e0e7ff; }
+    .out-closing .sc-out-lbl  { color: #4338ca; }
+    .out-closing .sc-out-val  { color: #4338ca; }
+    .out-closing .sc-out-sub  { color: #4338ca; }
+    .out-closing .sc-out-chevron { color: #4338ca; }
+
     /* BL branch row */
     .sc-bl-row {
       display: flex;
@@ -857,6 +869,11 @@
     .rddue .out-lbl  { color: #b91c1c; }
     .rddue .out-val  { color: #b91c1c; }
     .out-block .out-sub { font-size: 11px; color: #7f1d1d; opacity: .8; margin-top: 3px; }
+    .out-block.closing { background: #eef2ff; border-color: #c7d2fe; }
+    .closing .out-icon { background: #e0e7ff; }
+    .closing .out-lbl  { color: #4338ca; }
+    .closing .out-val  { color: #4338ca; }
+    .out-block.closing .out-sub { color: #3730a3; opacity: .85; }
 
     /* ━━━ REVIEWED BAR ━━━ */
     #reviewedBar {
@@ -1062,8 +1079,8 @@
     .prof-out-card .lbl { font-size: 10px; text-transform: uppercase; color: var(--text3); font-weight: 600; letter-spacing: .05em; }
     .prof-out-card .val { font-size: 16px; font-weight: 700; color: var(--text); margin-top: 3px; }
     .prof-out-card .sub { font-size: 10.5px; color: var(--text3); margin-top: 2px; }
-    .prof-out-card.due { cursor: pointer; }
-    .prof-out-card.due:hover { border-color: var(--border2); }
+    .prof-out-card.due, .prof-out-card.closing { cursor: pointer; }
+    .prof-out-card.due:hover, .prof-out-card.closing:hover { border-color: var(--border2); }
 
     /* ── Per-product detail block ── */
     .prof-detail-block {
@@ -1305,6 +1322,7 @@ function setupRoleUI() {
 const RD_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxcZ5BVpz-jvCQze4msaEqv1uSUTS-Z-mulCPYUU9xvh0_8R4aDoMmOIMclJQbIeeVWAtA9qkyJ8Vv/pub?gid=658458096&single=true&output=csv";
 const GL_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPuLZy5EEg4acZqfVl5varn3gm9BsX72-PcQiLOkecuIF03o6etD3UKknOLCYdocV72iyxWX6B2Srm/pub?gid=1215943151&single=true&output=csv";
 const RD_DUE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRuvWqZEdMyig6Hht7u-WjVs0mi_VT2ygSgoXn6zs_85aURWB95zaeqxAvdMzbm4XGv-XrwhrBVKBux/pub?gid=0&single=true&output=csv";
+const CLOSING_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxcZ5BVpz-jvCQze4msaEqv1uSUTS-Z-mulCPYUU9xvh0_8R4aDoMmOIMclJQbIeeVWAtA9qkyJ8Vv/pub?gid=284707732&single=true&output=csv";
 
 /* ━━━ SML COMPANY NORMALIZATION ━━━
    Mirrors this dashboard's own RD Outstanding filter, which already treats
@@ -1608,6 +1626,92 @@ async function fetchRDDue(empRoster) {
   }
 }
 
+/* ━━━ CLOSING (count + amount, per-transaction drill-down) ━━━
+   Reads the published "Closing" register CSV (same shared publish doc
+   as RD_CSV_URL / RD_DUE_CSV_URL, "Closing" tab) — output of
+   closing.py (Deposit_Payment_With_Staff), one row per RD closing/
+   payment transaction: Sl_No, Date, Deposit_No, Share_Name, Amount,
+   Principal, Interest, Total_Amount, Int_Accrued, Staff_Name, Company,
+   Branch, TDS, Pmt_Mode, PAN_No, TDS_Type, Branch_Raw.
+   Employee identification mirrors fetchRDDue() above:
+     1. If Company holds a numeric employee code (e.g. "8079"), resolve
+        the canonical name via the EMP_ROSTER_CSV_URL master roster.
+     2. Otherwise fall back to isSMLCompany()/isKnownSMLStaffName() on
+        the raw Staff_Name column.
+   Grouped per staff:
+     - count  → number of closing transactions (rows) for that staff.
+     - amount → sum of the "Amount" column across those rows.
+   Individual transactions are kept for the drill-down modal
+   (Deposit_No, Share_Name, Date, Amount). */
+async function fetchClosing(empRoster) {
+  empRoster = empRoster || {};
+  try {
+    const res = await fetch(CLOSING_CSV_URL);
+    const text = await res.text();
+    const rows = text.split('\n');
+    if (rows.length < 2) return {};
+
+    const headers   = rows[0].split(',').map(h => h.trim());
+    const nameIdx    = headers.indexOf('Staff_Name');
+    const compIdx    = headers.indexOf('Company');
+    const shareIdx   = headers.indexOf('Share_Name');
+    const depIdx     = headers.indexOf('Deposit_No');
+    const dateIdx    = headers.indexOf('Date');
+    const amtIdx     = headers.indexOf('Amount');
+    if (nameIdx === -1 || amtIdx === -1) return {};
+
+    const closingMap = {};
+    for (let i = 1; i < rows.length; i++) {
+      if (!rows[i].trim()) continue;
+
+      // Custom parser to handle quotes and commas inside numbers (e.g., "5,00,000")
+      let cols = [];
+      let current = "";
+      let inQuotes = false;
+      for (let char of rows[i]) {
+        if (char === '"') inQuotes = !inQuotes;
+        else if (char === ',' && !inQuotes) { cols.push(current); current = ""; }
+        else current += char;
+      }
+      cols.push(current);
+
+      const compRaw = compIdx !== -1 ? (cols[compIdx] || "").trim() : "";
+      let name = "";
+
+      // Path 1: Company cell is a numeric employee code (starts with "8") — resolve via master roster.
+      if (/^8\d{2,}$/.test(compRaw)) {
+        const hit = empRoster[String(parseInt(compRaw, 10))];
+        if (hit && hit.name) name = hit.name.trim();
+      }
+
+      // Path 2: fall back to raw Staff_Name + company/name-based SML check.
+      if (!name) {
+        const rawName = (cols[nameIdx] || "").trim();
+        if (!rawName) continue;
+        if (!isSMLCompany(compRaw) && !isKnownSMLStaffName(rawName)) continue;
+        name = rawName;
+      }
+
+      const amtStr = (cols[amtIdx] || "").replace(/,/g,'').replace(/"/g,'').trim();
+      const amt = parseFloat(amtStr) || 0;
+
+      const shareName = shareIdx !== -1 ? (cols[shareIdx] || "").trim() : "";
+      const depositNo = depIdx   !== -1 ? (cols[depIdx]   || "").trim() : "";
+      const date       = dateIdx  !== -1 ? (cols[dateIdx]  || "").trim() : "";
+
+      const key = name.toLowerCase();
+      if (!closingMap[key]) closingMap[key] = { count: 0, amount: 0, accounts: [] };
+      closingMap[key].count  += 1;
+      closingMap[key].amount += amt;
+      closingMap[key].accounts.push({ shareName, depositNo, date, amount: amt });
+    }
+    return closingMap;
+  } catch (e) {
+    console.error("Error fetching Closing CSV:", e);
+    return {};
+  }
+}
+
 async function load() {
   try {
     const r = await fetch(API + "?token=" + encodeURIComponent(SESSION_TOKEN));
@@ -1645,6 +1749,24 @@ async function load() {
           s.metrics["RD"].dueInstallments = rdDueMap[sName].installmentTotal; // total pending installment-months (informational)
           s.metrics["RD"].dueAmount       = rdDueMap[sName].amount;
           s.metrics["RD"].dueAccounts     = rdDueMap[sName].accounts;
+        }
+      });
+    });
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // ━━━ INJECT CLOSING (count + amount) FROM CSV ━━━
+    const empRosterForClosing = await fetchEmployeeRoster();
+    const closingMap = await fetchClosing(empRosterForClosing);
+    allData.forEach(b => {
+      (b.staff || []).forEach(s => {
+        const sName = s.name.trim().toLowerCase();
+        if (closingMap[sName] !== undefined) {
+          if (!s.metrics["RD"]) {
+            s.metrics["RD"] = { monthlyAchievement: {}, monthlyTarget: 0 };
+          }
+          s.metrics["RD"].closingCount    = closingMap[sName].count;
+          s.metrics["RD"].closingAmount   = closingMap[sName].amount;
+          s.metrics["RD"].closingAccounts = closingMap[sName].accounts;
         }
       });
     });
@@ -1901,6 +2023,28 @@ function renderSnap(staff, months) {
     totals["GoldLoan"].tgt = branch.glBranchMonthlyTarget * months.length;
   }
 
+  /* ━━━ YTD TOTALS (Apr → last selected month) — needed for the per-product Gap (YTD) column ━━━ */
+  const lastSelMonth = [...months].sort((a,b) => MONTHS.indexOf(a) - MONTHS.indexOf(b)).at(-1);
+  const ytdMonthsList = MONTHS.slice(0, MONTHS.indexOf(lastSelMonth) + 1);
+  let ytdTotals = {};
+  staff.forEach(s => {
+    for (let k in s.metrics) {
+      if (!ytdTotals[k]) ytdTotals[k] = { tgt: 0, ach: 0 };
+      const metric   = s.metrics[k];
+      const effMonths = getEffectiveMonths(s.doj, ytdMonthsList);
+      effMonths.forEach(m => { ytdTotals[k].ach += (metric.monthlyAchievement[m] || 0); });
+      if (k !== "BusinessLoan") { ytdTotals[k].tgt += (metric.monthlyTarget || 0) * effMonths.length; }
+    }
+  });
+  if (ytdTotals["BusinessLoan"]) {
+    const blMonthly = branch.blBranchMonthlyTarget || 0;
+    const blAnnual  = branch.blBranchTotalTarget   || 0;
+    ytdTotals["BusinessLoan"].tgt = blAnnual > 0 ? blAnnual : (blMonthly * ytdMonthsList.length);
+  }
+  if (ytdTotals["GoldLoan"] && branch.glBranchMonthlyTarget) {
+    ytdTotals["GoldLoan"].tgt = branch.glBranchMonthlyTarget * ytdMonthsList.length;
+  }
+
   const realStaff  = staff.filter(s => s.name.toUpperCase() !== "TOTAL");
   const staffCount = realStaff.length;
   let onTgt = 0, belowProd = 0;
@@ -1922,21 +2066,17 @@ function renderSnap(staff, months) {
   const mlist = [...selMonths].sort((a,b) => MONTHS.indexOf(a) - MONTHS.indexOf(b)).join(", ");
   let rows = "";
   for (let k in totals) {
-    const p = totals[k].tgt > 0 ? Math.round(totals[k].ach / totals[k].tgt * 100) : 0;
-    const g = totals[k].ach - totals[k].tgt;
+    const gapM = totals[k].ach - totals[k].tgt;
+    const ytdT = ytdTotals[k] || { ach: 0, tgt: 0 };
+    const gapY = ytdT.ach - ytdT.tgt;
     rows += `<tr>
       <td style="font-weight:600">${PLABEL[k]||k}</td>
       <td>${fmt(totals[k].tgt)}</td>
       <td>${fmt(totals[k].ach)}</td>
-      <td><div class="bar-wrap">
-        <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(p,100)}%;background:${pc(p)}"></div></div>
-        <span class="badge ${bc(p)}" style="min-width:38px;text-align:center">${p}%</span>
-      </div></td>
-      <td style="color:${g<0?"#dc2626":"#16a34a"};font-weight:700">${g>=0?"+":""}${fmt(g)}</td>
+      <td style="color:${gapM<0?"#dc2626":"#16a34a"};font-weight:700">${gapM>=0?"+":""}${fmtFull(gapM,k)}</td>
+      <td style="color:${gapY<0?"#dc2626":"#16a34a"};font-weight:700">${gapY>=0?"+":""}${fmtFull(gapY,k)}</td>
     </tr>`;
   }
-
-  const blPct = totals["BusinessLoan"] ? Math.round(totals["BusinessLoan"].ach/(totals["BusinessLoan"].tgt||1)*100) : 0;
 
   /* ━━━ BRANCH RD DUE TOTAL — sum of every staff member's RD Due ━━━ */
   let branchDueCount = 0, branchDueAmount = 0;
@@ -1957,6 +2097,25 @@ function renderSnap(staff, months) {
           <div class="ms">${branchDueCount} a/c${branchDueCount===1?"":"s"} pending across branch ▸</div>
         </div>` : "";
 
+  /* ━━━ BRANCH CLOSING TOTAL — sum of every staff member's Closing ━━━ */
+  let branchClosingCount = 0, branchClosingAmount = 0;
+  const branchClosingStaff = [];
+  realStaff.forEach(s => {
+    const m = s.metrics["RD"];
+    if (m && m.closingCount) {
+      branchClosingCount  += m.closingCount;
+      branchClosingAmount += m.closingAmount || 0;
+      branchClosingStaff.push({ name: s.name, count: m.closingCount, amount: m.closingAmount || 0, metric: m });
+    }
+  });
+  window.__branchClosingStaff = branchClosingStaff; // stash for the drill-down modal
+  const closingCard = branchClosingCount > 0 ? `
+        <div class="mc mc-closing" style='cursor:pointer' onclick='openBranchClosing(${attrJSON(branch.branchName)})'>
+          <div class="ml">Closing</div>
+          <div class="mv" style="color:#4338ca">${fmtFull(branchClosingAmount,"RD")}</div>
+          <div class="ms">${branchClosingCount} a/c${branchClosingCount===1?"":"s"} closed across branch ▸</div>
+        </div>` : "";
+
   document.getElementById("snap").innerHTML = `
     <div class="card">
       <div class="card-head">
@@ -1974,21 +2133,17 @@ function renderSnap(staff, months) {
           <div class="mv" style="color:${belowProd===0?"#16a34a":"#d97706"}">${belowProd}</div>
           <div class="ms">of ${Object.keys(totals).length} products</div>
         </div>
-        <div class="mc ${blPct>=100?"mc-green":blPct>=75?"mc-amber":"mc-red"}">
-          <div class="ml">Business Loan</div>
-          <div class="mv" style="color:${pc(blPct)}">${blPct}%</div>
-          <div class="ms">branch target</div>
-        </div>
         <div class="mc">
           <div class="ml">Period</div>
           <div class="mv" style="font-size:18px">${months.length}</div>
           <div class="ms">${months.length===1?"month selected":"months selected"}</div>
         </div>
         ${rdDueCard}
+        ${closingCard}
       </div>
       <div style="overflow-x:auto">
         <table>
-          <thead><tr><th>Product</th><th>Target</th><th>Achievement</th><th>Progress</th><th>Gap</th></tr></thead>
+          <thead><tr><th>Product</th><th>Target</th><th>Achievement</th><th>Gap (Monthly)</th><th>Gap (YTD)</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
@@ -2092,6 +2247,19 @@ function renderStaff(staff, months) {
               <div class="sc-out-lbl">RD Due<span class="sc-out-chevron">▸</span></div>
               <div class="sc-out-val">${fmtFull(metric.dueAmount,"RD")}</div>
               <div class="sc-out-sub">${metric.dueCount} a/c${metric.dueCount===1?"":"s"} pending</div>
+            </div>
+          </div>`;
+        }
+
+        /* Closing pill — count + amount, click to drill down */
+        if (k === "RD" && metric.closingCount !== null && metric.closingCount !== undefined) {
+          prodsHTML += `
+          <div class="sc-outstanding out-closing" onclick='openClosing(${attrJSON(s.name)},${attrJSON(metric)})'>
+            <div class="sc-out-icon">🔒</div>
+            <div class="sc-out-info">
+              <div class="sc-out-lbl">Closing<span class="sc-out-chevron">▸</span></div>
+              <div class="sc-out-val">${fmtFull(metric.closingAmount,"RD")}</div>
+              <div class="sc-out-sub">${metric.closingCount} a/c${metric.closingCount===1?"":"s"} closed</div>
             </div>
           </div>`;
         }
@@ -2471,6 +2639,91 @@ function openRDDue(sname, metric) {
   document.getElementById("overlay").classList.add("open");
 }
 
+/* ── BRANCH-LEVEL CLOSING DRILL-DOWN MODAL — staff breakdown for the whole branch ── */
+function openBranchClosing(branchName) {
+  const list = (window.__branchClosingStaff || []).slice().sort((a,b) => b.amount - a.amount);
+  window.__branchClosingList = list; // for row-click navigation into per-staff drill-down
+  const totalAmount = list.reduce((sum,s) => sum + s.amount, 0);
+  const totalCount  = list.reduce((sum,s) => sum + s.count, 0);
+
+  document.getElementById("modalTitle").textContent = branchName + " — Closing (Branch)";
+  const rowsHTML = list.length ? list.map((s, idx) => `
+    <tr style="cursor:pointer" onclick="openClosingFromBranch(${idx})">
+      <td>${s.name}</td>
+      <td style="text-align:center">${s.count}</td>
+      <td style="text-align:center;font-weight:700;color:#4338ca">${fmtFull(s.amount,"RD")}</td>
+    </tr>`).join("") : `<tr><td colspan="3" style="text-align:center;padding:12px;color:var(--text3)">No closings recorded for this branch.</td></tr>`;
+
+  document.getElementById("modalBody").innerHTML = `
+    <div style="margin-bottom:10px;font-size:12px;color:var(--text3)">
+      Closing summary across every staff member in this branch (SML only).
+    </div>
+    <div class="out-block closing">
+      <div class="out-icon">🔒</div>
+      <div>
+        <div class="out-lbl">Branch Closing Amount</div>
+        <div class="out-val">${fmtFull(totalAmount,"RD")}</div>
+        <div class="out-sub">${totalCount} a/c${totalCount===1?"":"s"} closed across ${list.length} staff member${list.length===1?"":"s"}</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">By staff member</div>
+    <div style="max-height:280px;overflow-y:auto;margin-top:6px">
+      <table style="font-size:12px;width:100%">
+        <thead><tr><th>Staff</th><th style="text-align:center">Closed A/Cs</th><th style="text-align:center">Amount</th></tr></thead>
+        <tbody>${rowsHTML}</tbody>
+      </table>
+    </div>`;
+  document.getElementById("overlay").classList.add("open");
+}
+
+function openClosingFromBranch(idx) {
+  const entry = (window.__branchClosingList || [])[idx];
+  if (!entry) return;
+  openClosing(entry.name, entry.metric);
+}
+
+/* ── CLOSING DRILL-DOWN MODAL ── */
+function openClosing(sname, metric) {
+  document.getElementById("modalTitle").textContent = sname + " — Closing";
+  const count  = metric.closingCount || 0;
+  const amount = metric.closingAmount || 0;
+  const avg    = count > 0 ? amount / count : 0;
+
+  const accounts = (metric.closingAccounts || []).slice().sort((a,b) => b.amount - a.amount);
+  const rowsHTML = accounts.length ? accounts.map(a => `
+    <tr>
+      <td>${a.depositNo || "<span style=\'color:var(--text3)\'>—</span>"}</td>
+      <td>${a.shareName || "<span style=\'color:var(--text3)\'>—</span>"}</td>
+      <td style="text-align:center">${a.date || "—"}</td>
+      <td style="text-align:center;font-weight:700;color:#4338ca">${fmtFull(a.amount,"RD")}</td>
+    </tr>`).join("") : `<tr><td colspan="4" style="text-align:center;padding:12px;color:var(--text3)">No individual transaction details available for this staff member.</td></tr>`;
+
+  document.getElementById("modalBody").innerHTML = `
+    <div style="margin-bottom:10px;font-size:12px;color:var(--text3)">
+      RD deposit closings/payments recorded against this staff member, as of the latest Closing register upload (SML only).
+    </div>
+    <div class="out-block closing">
+      <div class="out-icon">🔒</div>
+      <div>
+        <div class="out-lbl">Closing Amount</div>
+        <div class="out-val">${fmtFull(amount,"RD")}</div>
+        <div class="out-sub">${count} a/c${count===1?"":"s"} closed · avg ${fmtFull(avg,"RD")} / a/c</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:16px;font-size:12px;flex-wrap:wrap">
+      <span>Closed a/cs: <b>${count}</b></span>
+      <span>Amount: <b>${fmt(amount)}</b></span>
+    </div>
+    <div style="margin-top:14px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Individual closing transactions</div>
+    <div style="max-height:280px;overflow-y:auto;margin-top:6px">
+      <table style="font-size:12px;width:100%">
+        <thead><tr><th>Deposit No.</th><th>Customer (Share_Name)</th><th style="text-align:center">Date</th><th style="text-align:center">Amount</th></tr></thead>
+        <tbody>${rowsHTML}</tbody>
+      </table>
+    </div>`;
+  document.getElementById("overlay").classList.add("open");
+}
+
 function maybeClose(e) { if (e.target === document.getElementById("overlay")) closeModal(); }
 function closeModal()   { document.getElementById("overlay").classList.remove("open"); }
 
@@ -2604,6 +2857,10 @@ function openStaffProfile(sname) {
   const rdDueAmt  = rd && rd.dueAmount ? rd.dueAmount : 0;
   const rdDueCnt  = rd && rd.dueCount  ? rd.dueCount  : 0;
 
+  /* Closing roll-up */
+  const closingAmt = rd && rd.closingAmount ? rd.closingAmount : 0;
+  const closingCnt = rd && rd.closingCount  ? rd.closingCount  : 0;
+
   /* ── Auto-generated insight bullets ── */
   let insights = [];
   insights.push(rankPos !== "-"
@@ -2616,6 +2873,7 @@ function openStaffProfile(sname) {
   if (atRisk > 0) insights.push(`⚠️ ${atRisk} of ${rated.length} products are below 75% attainment.`);
   else if (rated.length > 0 && onTgt === rated.length) insights.push(`✅ Meeting or exceeding target across all ${rated.length} rated products.`);
   if (rdDueAmt > 0) insights.push(`⏰ ${rdDueCnt} RD account${rdDueCnt === 1 ? "" : "s"} pending collection, worth ${fmtFull(rdDueAmt, "RD")}.`);
+  if (closingAmt > 0) insights.push(`🔒 ${closingCnt} RD account${closingCnt === 1 ? "" : "s"} closed, worth ${fmtFull(closingAmt, "RD")}.`);
   if (tenureStr) insights.push(`On the team for <b>${tenureStr}</b> (joined ${dojStr}).`);
 
   const insightHTML = insights.map(t => `<div class="prof-insight-row">${t}</div>`).join("");
@@ -2644,6 +2902,14 @@ function openStaffProfile(sname) {
         <div class="lbl">RD Due ›</div>
         <div class="val">${fmtFull(rdDueAmt, "RD")}</div>
         <div class="sub">${rdDueCnt} a/c${rdDueCnt === 1 ? "" : "s"} pending</div>
+      </div>`;
+  }
+  if (closingCnt > 0) {
+    outCardsHTML += `
+      <div class="prof-out-card closing" onclick='openClosing(${attrJSON(sname)},${attrJSON(rd)})'>
+        <div class="lbl">Closing ›</div>
+        <div class="val">${fmtFull(closingAmt, "RD")}</div>
+        <div class="sub">${closingCnt} a/c${closingCnt === 1 ? "" : "s"} closed</div>
       </div>`;
   }
   const outstandingHTML = outCardsHTML
@@ -2704,6 +2970,19 @@ function openStaffProfile(sname) {
         <div style="margin-top:8px">
           <span class="prof-out-card due" style="display:inline-block;cursor:pointer" onclick='openRDDue(${attrJSON(sname)},${attrJSON(p.metric)})'>
             <span class="lbl">View account-wise RD Due list ›</span>
+          </span>
+        </div>`;
+      }
+      if (p.key === "RD" && p.metric.closingCount !== null && p.metric.closingCount !== undefined) {
+        statsHTML += `
+        <div class="prof-subhead">Closing (as on date)</div>
+        <div class="prof-stats-grid">
+          <div class="prof-stat"><div class="prof-stat-v">${p.metric.closingCount || 0}</div><div class="prof-stat-l">Accounts Closed</div></div>
+          <div class="prof-stat"><div class="prof-stat-v">${fmtFull(p.metric.closingAmount || 0, "RD")}</div><div class="prof-stat-l">Amount</div></div>
+        </div>
+        <div style="margin-top:8px">
+          <span class="prof-out-card closing" style="display:inline-block;cursor:pointer" onclick='openClosing(${attrJSON(sname)},${attrJSON(p.metric)})'>
+            <span class="lbl">View account-wise Closing list ›</span>
           </span>
         </div>`;
       }
@@ -2831,6 +3110,7 @@ function doExport() {
   if (totals["BusinessLoan"]) {
     const blM = branch.blBranchMonthlyTarget || 0;
     const blA = branch.blBranchTotalTarget   || 0;
+    totals["BusinessLoan"].tgt    = blA > 0 ? exact(blA) : exact(blM * months.length);
     totals["BusinessLoan"].ytdTgt = blA > 0 ? exact(blA) : exact(blM * YTD_MONTHS.length);
   }
   if (totals["GoldLoan"] && branch.glBranchMonthlyTarget) {
@@ -2844,13 +3124,14 @@ function doExport() {
   // This variable holds the name of the selected month(s) (e.g. "Jun" or "Apr-Jun")
   const pname = months.length === 1 ? months[0] : months.join("–");
 
-  // ── Branch summary rows ──
+  // ── Branch summary rows — per-product Gap (Monthly) and Gap (YTD) ──
   const summaryRows = Object.keys(totals).map(k => {
-    const isBL = k === "BusinessLoan";
-    const tgt  = isBL ? '<i class="mu">branch</i>' : dispVal(totals[k].tgt, k);
-    const ach  = dispVal(totals[k].ach, k);
-    const sf   = isBL ? '<i class="mu">—</i>' : dispShortfall(totals[k].ytdAch - totals[k].ytdTgt, k);
-    return `<tr><td class="lc">${PLABEL_SHORT[k]||k}${isBL?' <i class="mu">br</i>':""}</td><td>${tgt}</td><td>${ach}</td><td>${sf}</td></tr>`;
+    const isBL   = k === "BusinessLoan";
+    const tgt    = dispVal(totals[k].tgt, k);
+    const ach    = dispVal(totals[k].ach, k);
+    const gapM   = dispShortfall(totals[k].ach - totals[k].tgt, k);
+    const gapY   = dispShortfall(totals[k].ytdAch - totals[k].ytdTgt, k);
+    return `<tr><td class="lc">${PLABEL_SHORT[k]||k}${isBL?' <i class="mu">br</i>':""}</td><td>${tgt}</td><td>${ach}</td><td>${gapM}</td><td>${gapY}</td></tr>`;
   }).join("");
 
   const trendTHs = YTD_MONTHS.map(m => `<th class="tc">${m}</th>`).join("");
@@ -2876,13 +3157,17 @@ function doExport() {
                       ? `${dispVal(exact(metric.dueAmount), k)} <span class="mu">(${metric.dueCount})</span>`
                       : '<span class="mu">—</span>';
 
+      const closing = (k === "RD" && metric.closingCount !== null && metric.closingCount !== undefined)
+                      ? `${dispVal(exact(metric.closingAmount), k)} <span class="mu">(${metric.closingCount})</span>`
+                      : '<span class="mu">—</span>';
+
       const trendTDs = YTD_MONTHS.map(m => {
         const v = exact(ma[m] || 0);
         const hi = mt > 0 && v >= mt ? " hit" : "";
         return `<td class="tc${hi}">${dispVal(v,k)}</td>`;
       }).join("");
 
-      return `<tr><td class="lc">${PLABEL_SHORT[k]||k}${isBL?' <i class="mu">br</i>':""}</td><td class="tc">${outst}</td><td class="tc">${rdDue}</td><td>${tgt}</td><td>${ach}</td><td>${sf}</td>${trendTDs}</tr>`;
+      return `<tr><td class="lc">${PLABEL_SHORT[k]||k}${isBL?' <i class="mu">br</i>':""}</td><td class="tc">${outst}</td><td class="tc">${rdDue}</td><td class="tc">${closing}</td><td>${tgt}</td><td>${ach}</td><td>${sf}</td>${trendTDs}</tr>`;
     }).join("");
   }
 
@@ -2904,6 +3189,7 @@ function doExport() {
     <th class="lc">Product</th>
     <th class="tc">Outstanding</th>
     <th class="tc">RD Due</th>
+    <th class="tc">Closing</th>
     <th>Target (${pname})</th>
     <th>Achieved (${pname})</th>
     <th>Short Fall from April</th>
@@ -2984,7 +3270,8 @@ td.hit{font-weight:bold;}
       <th class="lc">Product</th>
       <th>Target (${pname})</th>
       <th>Achieved (${pname})</th>
-      <th>Short Fall from April</th>
+      <th>Gap (Monthly)</th>
+      <th>Gap (YTD, Apr–${lastMonth})</th>
     </tr></thead>
     <tbody>${summaryRows}</tbody>
   </table>
