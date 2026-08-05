@@ -353,48 +353,21 @@
 
     /* ━━━ STAFF GRID ━━━ */
     .staff-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
-      gap: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
       padding: 20px;
     }
 
-    /* ━━━ STAFF CARD ━━━ */
-    .sc {
-      background: var(--surf);
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 1px 4px rgba(15,23,80,.06), 0 6px 24px rgba(15,23,80,.08), 0 0 0 1px rgba(60,80,160,.10);
-      transition: box-shadow .3s, transform .2s;
-      position: relative;
-      display: flex;
-      flex-direction: column;
+    /* ━━━ STAFF CARD — same horizontal "card + table" style as Branch Snapshot ━━━ */
+    .sc { margin: 0; }
+    .sc .card-head h2 { display: flex; align-items: center; gap: 8px; }
+    .sc .doj-tag { font-size: 11px; font-weight: 400; color: rgba(255,255,255,.55); }
+    .sc .doj-yrs {
+      color: #93c5fd; font-weight: 700;
+      background: rgba(147,197,253,.14); padding: 1px 6px; border-radius: 20px;
     }
-    .sc:hover {
-      box-shadow: 0 8px 32px rgba(15,23,80,.15), 0 24px 56px rgba(15,23,80,.10), 0 0 0 1px rgba(60,80,160,.16);
-      transform: translateY(-3px);
-    }
-
-    /* ── Card header ── */
-    .sc-head {
-      padding: 20px 22px 18px;
-      background: linear-gradient(135deg, #1a3475 0%, #2347a8 55%, #3358c8 100%);
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      position: relative;
-      overflow: hidden;
-    }
-    /* Decorative soft radial glow */
-    .sc-head::after {
-      content: '';
-      position: absolute;
-      right: -30px; top: -40px;
-      width: 140px; height: 140px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,.10) 0%, transparent 70%);
-      pointer-events: none;
-    }
+    .sc .ch-sub b { color: #fff; font-weight: 700; }
 
     .avatar {
       width: 46px; height: 46px;
@@ -411,259 +384,31 @@
       letter-spacing: .04em;
       box-shadow: 0 4px 12px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.18);
     }
-
-    .sc-info { flex: 1; min-width: 0; }
-    .sc-name {
-      font-size: 16px;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: -.015em;
-      line-height: 1.2;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .doj-tag {
-      font-size: 11px;
-      color: rgba(255,255,255,.55);
-      font-weight: 400;
-      margin-top: 4px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .doj-yrs {
-      color: #93c5fd;
-      font-weight: 700;
-      background: rgba(147,197,253,.12);
-      padding: 1px 6px;
-      border-radius: 20px;
-    }
-
-    /* Overall % pill — right side of header */
-    .sc-pill-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-    .sc-overall-pill {
-      font-size: 18px;
-      font-weight: 800;
-      padding: 6px 14px;
-      border-radius: 12px;
-      letter-spacing: -.02em;
-      line-height: 1;
-    }
-    .sc-period-lbl {
-      font-size: 10px;
-      color: rgba(255,255,255,.45);
-      font-weight: 500;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-
-    /* ── Product rows ── */
-    .sc-products { flex: 1; padding: 0; }
-
-    .sc-prod-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 0;
-      border-bottom: 1px solid #f0f2fa;
-      padding: 0;
-    }
-    .sc-prod-row:last-child { border-bottom: none; }
-
-    .sc-prod-main {
-      padding: 14px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .sc-prod-top {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-    }
     .prod-dot {
       width: 9px; height: 9px;
       border-radius: 50%;
       flex-shrink: 0;
+      display: inline-block;
     }
-    .prod-name {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text);
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
+    .prod-name { font-weight: 600; }
 
-    .sc-amounts {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-      flex-wrap: wrap;
+    .stf-ach { cursor: pointer; font-weight: 700; }
+    .stf-ach:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(59,130,246,.5); }
+    .stf-pill {
+      display: inline-block;
+      font-size: 11px; font-weight: 800;
+      padding: 2px 9px;
+      border-radius: 20px;
     }
-    .sc-ach {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--navy);
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -.02em;
+    .stf-out {
       cursor: pointer;
+      color: var(--navy2);
+      font-weight: 600;
     }
-    .sc-ach:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(59,130,246,.5); }
-    .sc-sep { font-size: 12px; color: var(--text3); }
-    .sc-tgt {
-      font-size: 12px;
-      color: var(--text3);
-      font-weight: 500;
-      font-variant-numeric: tabular-nums;
-    }
-    .sc-tgt-lbl { font-size: 10px; color: var(--text3); }
-
-    /* Progress bar inline */
-    .sc-bar-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .sc-bar-bg {
-      flex: 1;
-      height: 4px;
-      border-radius: 4px;
-      background: #e8ebf8;
-      overflow: hidden;
-      min-width: 40px;
-    }
-    .sc-bar-fill {
-      height: 100%;
-      border-radius: 4px;
-      transition: width .5s cubic-bezier(.4,0,.2,1);
-    }
-    .sc-pct-lbl {
-      font-size: 11px;
-      font-weight: 700;
-      min-width: 34px;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
-    .sc-gap {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 6px;
-    }
-    .sc-gap.pos { background: #dcfce7; color: #15803d; }
-    .sc-gap.neg { background: #fee2e2; color: #b91c1c; }
-    .sc-gap.neu { background: #f1f5f9; color: var(--text3); }
-
-    /* YTD gap — slightly muted style to distinguish from period gap */
-    .sc-gap-ytd {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 6px;
-      border: 1px dashed;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-    }
-    .sc-gap-ytd.pos { background: #f0fdf4; color: #15803d; border-color: #86efac; }
-    .sc-gap-ytd.neg { background: #fff5f5; color: #b91c1c; border-color: #fca5a5; }
-    .sc-gap-ytd.neu { background: #f8fafc; color: var(--text3); border-color: #cbd5e1; }
-    .sc-gap-ytd-lbl { font-size: 9px; font-weight: 800; letter-spacing: .06em; opacity: .75; }
-
-    /* Right side: badge */
-    .sc-prod-right {
-      padding: 14px 16px 14px 0;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    /* Outstanding inlined under each product */
-    .sc-outstanding {
-      margin: 0 18px 12px;
-      padding: 9px 12px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border: 1px solid;
-    }
-    .sc-outstanding.out-inv { background: #eff6ff; border-color: #bfdbfe; }
-    .sc-outstanding.out-gl  { background: #fffbeb; border-color: #fde68a; }
-    .sc-outstanding.out-rd  { background: #f0fdfa; border-color: #a7f3d0; }
-    .sc-out-icon {
-      width: 30px; height: 30px;
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; flex-shrink: 0;
-    }
-    .out-inv .sc-out-icon { background: #dbeafe; }
-    .out-gl  .sc-out-icon { background: #fef3c7; }
-    .out-rd  .sc-out-icon { background: #ccfbf1; }
-    .sc-out-info { flex: 1; min-width: 0; }
-    .sc-out-lbl {
-      font-size: 10px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: .07em;
-      margin-bottom: 1px;
-    }
-    .out-inv .sc-out-lbl { color: #1e40af; }
-    .out-gl  .sc-out-lbl { color: #92400e; }
-    .out-rd  .sc-out-lbl { color: #0f766e; }
-    .sc-out-val {
-      font-size: 15px; font-weight: 800;
-      font-variant-numeric: tabular-nums;
-    }
-    .out-inv .sc-out-val { color: #1d4ed8; }
-    .out-gl  .sc-out-val { color: #b45309; }
-    .out-rd  .sc-out-val { color: #0f766e; }
-
-    /* RD Due pill — sits beside RD Outstanding, clickable drill-down */
-    .sc-outstanding.out-rddue { background: #fef2f2; border-color: #fecaca; cursor: pointer; transition: box-shadow .15s, transform .15s; }
-    .sc-outstanding.out-rddue:hover { box-shadow: 0 2px 8px rgba(220,38,38,.18); transform: translateY(-1px); }
-    .out-rddue .sc-out-icon { background: #fee2e2; }
-    .out-rddue .sc-out-lbl  { color: #b91c1c; }
-    .out-rddue .sc-out-val  { color: #b91c1c; }
-    .sc-out-sub {
-      font-size: 10.5px; font-weight: 600; color: #b91c1c; opacity: .75;
-      margin-top: 1px;
-    }
+    .stf-out:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .stf-sub { font-size: 10px; color: var(--text3); }
+    .stf-mu { color: var(--text3); font-style: italic; }
     .sc-out-chevron { font-size: 11px; color: #b91c1c; opacity: .55; margin-left: 4px; }
-
-    /* Closing pill — sits beside RD Due, clickable drill-down */
-    .sc-outstanding.out-closing { background: #eef2ff; border-color: #c7d2fe; cursor: pointer; transition: box-shadow .15s, transform .15s; }
-    .sc-outstanding.out-closing:hover { box-shadow: 0 2px 8px rgba(67,56,202,.18); transform: translateY(-1px); }
-    .out-closing .sc-out-icon { background: #e0e7ff; }
-    .out-closing .sc-out-lbl  { color: #4338ca; }
-    .out-closing .sc-out-val  { color: #4338ca; }
-    .out-closing .sc-out-sub  { color: #4338ca; }
-    .out-closing .sc-out-chevron { color: #4338ca; }
-
-    /* BL branch row */
-    .sc-bl-row {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 14px 18px;
-      border-bottom: 1px solid #f0f2fa;
-    }
-    .sc-bl-row:last-child { border-bottom: none; }
-    .sc-bl-ach {
-      font-size: 18px; font-weight: 800;
-      color: var(--navy); font-variant-numeric: tabular-nums;
-      cursor: pointer;
-    }
-    .sc-bl-ach:hover { text-decoration: underline; text-underline-offset: 3px; }
-    .sc-bl-note { font-size: 11px; color: var(--text3); font-style: italic; }
 
     /* ━━━ RANKINGS ━━━ */
     .rank-row {
@@ -911,16 +656,13 @@
       .topbar h1 { font-size: 13px; }
       .main { padding: 10px 10px; gap: 10px; }
       .metrics-row { grid-template-columns: 1fr 1fr; gap: 9px; padding: 11px 13px; }
-      .staff-grid { grid-template-columns: 1fr; padding: 10px; gap: 14px; }
+      .staff-grid { padding: 10px; gap: 12px; }
       .ca-grid { grid-template-columns: 1fr; padding: 10px; }
       .tab { padding: 10px 13px; font-size: 11px; }
-      .sc-head { padding: 16px 16px 14px; gap: 12px; }
-      .sc-name { font-size: 14px; }
-      .sc-overall-pill { font-size: 16px; padding: 5px 11px; }
-      .sc-prod-main { padding: 12px 14px; }
-      .sc-prod-right { padding: 12px 12px 12px 0; }
-      .sc-ach { font-size: 16px; }
-      .sc-outstanding { margin: 0 14px 10px; }
+      .sc table { font-size: 11px; }
+      .sc thead th, .sc td { padding: 7px 8px; }
+      .sc .avatar { width: 24px; height: 24px; font-size: 10px; }
+      .card-head h2 { font-size: 12px; }
     }
 
     /* ━━━ MOBILE TOPBAR MENU — collapses selects/links/buttons into a
@@ -1538,10 +1280,11 @@ async function fetchEmployeeRoster() {
      - Inst_Amount  → the account's raw monthly installment amount (₹), used AS-IS, never multiplied.
      - Due_Amt      → the COUNT of pending/missed installments for that account.
      - Amount Due   → Inst_Amount × Due_Amt, computed fresh per account (this is the only place multiplication happens).
-   "a/cs pending" is the COUNT OF DISTINCT DUE ACCOUNTS — NOT the sum of
-   Due_Amt across accounts. Rows are summed per staff, restricted to SML
-   rows only, and the individual due accounts are kept for the drill-down
-   modal (Share_Name, Inst_Amount, Due_Amt, Amount Due).
+   "a/cs pending" is the COUNT OF DISTINCT DUE ACCOUNTS with 2+ pending
+   installments (Due_Amt >= 2 — a single missed installment is not treated
+   as "due") — NOT the sum of Due_Amt across accounts. Rows are summed per
+   staff, restricted to SML rows only, and the individual due accounts are
+   kept for the drill-down modal (Share_Name, Inst_Amount, Due_Amt, Amount Due).
    Employee identification, in priority order:
      1. If Company holds a numeric employee code (e.g. "8079"), resolve
         the canonical name via the EMP_ROSTER_CSV_URL master roster —
@@ -1605,7 +1348,7 @@ async function fetchRDDue(empRoster) {
 
       const dueCntStr = (cols[dueAmtIdx] || "").replace(/,/g,'').replace(/"/g,'').trim();
       const dueCnt = parseInt(dueCntStr, 10) || 0;
-      if (dueCnt <= 0) continue; // not currently due — skip this account entirely
+      if (dueCnt <= 1) continue; // skip not-due (0) AND single-installment-due (1) — only 2+ counts as due
 
       const instStr = instIdx !== -1 ? (cols[instIdx] || "").replace(/,/g,'').replace(/"/g,'').trim() : "";
       const instAmt = parseFloat(instStr) || 0;   // raw installment amount — never multiplied
@@ -2160,119 +1903,76 @@ function renderStaff(staff, months) {
   const ytdMonths    = MONTHS.slice(0, MONTHS.indexOf(lastSelMonth) + 1);
   const ytdLabel     = ytdMonths.length === 1 ? ytdMonths[0] : `Apr–${lastSelMonth}`;
 
-  /* Is the selected period already the full YTD? (hide duplicate if so) */
-  const periodIsYTD  = months.length === ytdMonths.length &&
-                       months.every(m => ytdMonths.includes(m));
-
   let html = `<div class="staff-grid">`;
 
   staff.forEach(s => {
     let sa = 0, st = 0;
-    let prodsHTML = "";
+    let rowsHTML = "";
 
     for (let k in s.metrics) {
       const r      = calc(s.metrics[k], months, s.doj);
       const metric = s.metrics[k];
       const dot    = PROD_COLOR[k] || "#94a3b8";
+      const nameCell = `<span class="prod-dot" style="background:${dot}"></span> <span class="prod-name">${PLABEL[k]||k}</span>`;
+
+      /* Outstanding / RD Due / Closing cells (shared across BL + normal rows) */
+      let outCell = `<span class="stf-mu">—</span>`;
+      if (OUT_CFG[k] && metric.outstanding !== null && metric.outstanding !== undefined) {
+        outCell = fmtFull(metric.outstanding, k);
+      }
+      let dueCell = `<span class="stf-mu">—</span>`;
+      if (k === "RD" && metric.dueCount !== null && metric.dueCount !== undefined) {
+        dueCell = `<span class="stf-out" onclick='openRDDue(${attrJSON(s.name)},${attrJSON(metric)})'>${fmtFull(metric.dueAmount,"RD")}</span>
+          <div class="stf-sub">${metric.dueCount} a/c${metric.dueCount===1?"":"s"} ▸</div>`;
+      }
+      let closingCell = `<span class="stf-mu">—</span>`;
+      if (k === "RD" && metric.closingCount !== null && metric.closingCount !== undefined) {
+        closingCell = `<span class="stf-out" onclick='openClosing(${attrJSON(s.name)},${attrJSON(metric)})'>${fmtFull(metric.closingAmount,"RD")}</span>
+          <div class="stf-sub">${metric.closingCount} a/c${metric.closingCount===1?"":"s"} ▸</div>`;
+      }
 
       if (k === "BusinessLoan") {
         sa += r.ach;
-        prodsHTML += `
-        <div class="sc-bl-row">
-          <span class="prod-dot" style="background:${dot}"></span>
-          <span class="prod-name">${PLABEL[k]||k}</span>
-          <span style="flex:1"></span>
-          <span class="sc-bl-ach"
-            onclick='openBreak(${attrJSON(s.name)},${attrJSON(k)},${attrJSON(metric)})'>${fmtFull(r.ach,k)}</span>
-          <span class="sc-bl-note">branch tgt</span>
-        </div>`;
+        rowsHTML += `<tr>
+          <td>${nameCell}</td>
+          <td>${outCell}</td>
+          <td>${dueCell}</td>
+          <td>${closingCell}</td>
+          <td><span class="stf-mu">branch tgt</span></td>
+          <td><span class="stf-ach" onclick='openBreak(${attrJSON(s.name)},${attrJSON(k)},${attrJSON(metric)})'>${fmtFull(r.ach,k)}</span></td>
+          <td><span class="stf-mu">—</span></td>
+          <td><span class="stf-mu">—</span></td>
+        </tr>`;
       } else {
         sa += r.ach; st += r.tgt;
-        const barW   = Math.min(r.pct, 100);
-        const gapCls = r.gap > 0 ? "pos" : r.gap < 0 ? "neg" : "neu";
-        const gapStr = r.gap >= 0 ? "+" + fmtFull(r.gap, k) : fmtFull(r.gap, k);
 
-        /* YTD gap */
-        const ytdR    = calc(metric, ytdMonths, s.doj);
-        const ytdGap  = ytdR.gap;
-        const ytdCls  = ytdGap > 0 ? "pos" : ytdGap < 0 ? "neg" : "neu";
-        const ytdStr  = ytdGap >= 0 ? "+" + fmtFull(ytdGap, k) : fmtFull(ytdGap, k);
+        const gapM     = r.gap;
+        const gapMStr  = (gapM>=0?"+":"") + fmtFull(gapM,k);
+        const gapMCol  = gapM<0 ? "#dc2626" : "#16a34a";
 
-        const ytdChip = periodIsYTD ? "" :
-          `<span class="sc-gap-ytd ${ytdCls}" title="YTD gap (${ytdLabel})">${ytdStr} <span class="sc-gap-ytd-lbl">YTD</span></span>`;
+        const ytdR     = calc(metric, ytdMonths, s.doj);
+        const gapY     = ytdR.gap;
+        const gapYStr  = (gapY>=0?"+":"") + fmtFull(gapY,k);
+        const gapYCol  = gapY<0 ? "#dc2626" : "#16a34a";
 
-        prodsHTML += `
-        <div class="sc-prod-row">
-          <div class="sc-prod-main">
-            <div class="sc-prod-top">
-              <span class="prod-dot" style="background:${dot}"></span>
-              <span class="prod-name">${PLABEL[k]||k}</span>
-            </div>
-            <div class="sc-amounts">
-              <span class="sc-ach"
-                onclick='openBreak(${attrJSON(s.name)},${attrJSON(k)},${attrJSON(metric)})'>${fmtFull(r.ach,k)}</span>
-              <span class="sc-sep">/</span>
-              <span class="sc-tgt-lbl">tgt&nbsp;</span><span class="sc-tgt">${fmtFull(r.tgt,k)}</span>
-            </div>
-            <div class="sc-bar-row">
-              <div class="sc-bar-bg">
-                <div class="sc-bar-fill" style="width:${barW}%;background:${pc(r.pct)}"></div>
-              </div>
-              <span class="sc-pct-lbl" style="color:${pc(r.pct)}">${r.pct}%</span>
-              <span class="sc-gap ${gapCls}">${gapStr}</span>
-              ${ytdChip}
-            </div>
-          </div>
-        </div>`;
-
-        /* Outstanding pill */
-        if (OUT_CFG[k] && metric.outstanding !== null && metric.outstanding !== undefined) {
-          const cfg = OUT_CFG[k];
-          prodsHTML += `
-          <div class="sc-outstanding out-${cfg.blockCls}">
-            <div class="sc-out-icon">${cfg.icon}</div>
-            <div class="sc-out-info">
-              <div class="sc-out-lbl">${cfg.label}</div>
-              <div class="sc-out-val">${fmtFull(metric.outstanding,k)}</div>
-            </div>
-          </div>`;
-        }
-
-        /* RD Due pill — count + amount, click to drill down */
-        if (k === "RD" && metric.dueCount !== null && metric.dueCount !== undefined) {
-          prodsHTML += `
-          <div class="sc-outstanding out-rddue" onclick='openRDDue(${attrJSON(s.name)},${attrJSON(metric)})'>
-            <div class="sc-out-icon">⏰</div>
-            <div class="sc-out-info">
-              <div class="sc-out-lbl">RD Due<span class="sc-out-chevron">▸</span></div>
-              <div class="sc-out-val">${fmtFull(metric.dueAmount,"RD")}</div>
-              <div class="sc-out-sub">${metric.dueCount} a/c${metric.dueCount===1?"":"s"} pending</div>
-            </div>
-          </div>`;
-        }
-
-        /* Closing pill — count + amount, click to drill down */
-        if (k === "RD" && metric.closingCount !== null && metric.closingCount !== undefined) {
-          prodsHTML += `
-          <div class="sc-outstanding out-closing" onclick='openClosing(${attrJSON(s.name)},${attrJSON(metric)})'>
-            <div class="sc-out-icon">🔒</div>
-            <div class="sc-out-info">
-              <div class="sc-out-lbl">Closing<span class="sc-out-chevron">▸</span></div>
-              <div class="sc-out-val">${fmtFull(metric.closingAmount,"RD")}</div>
-              <div class="sc-out-sub">${metric.closingCount} a/c${metric.closingCount===1?"":"s"} closed</div>
-            </div>
-          </div>`;
-        }
+        rowsHTML += `<tr>
+          <td>${nameCell}</td>
+          <td>${outCell}</td>
+          <td>${dueCell}</td>
+          <td>${closingCell}</td>
+          <td>${fmtFull(r.tgt,k)}</td>
+          <td><span class="stf-ach" onclick='openBreak(${attrJSON(s.name)},${attrJSON(k)},${attrJSON(metric)})'>${fmtFull(r.ach,k)}</span></td>
+          <td style="color:${gapMCol};font-weight:700">${gapMStr}</td>
+          <td style="color:${gapYCol};font-weight:700" title="YTD (${ytdLabel})">${gapYStr}</td>
+        </tr>`;
       }
     }
 
-    const op       = st > 0 ? Math.round(sa / st * 100) : 0;
-    const pillCls  = bc(op);
-    const pillColor = pc(op);
-
-    /* Pill background */
-    const pillBgMap = { bn: "rgba(22,197,94,.18)", ba: "rgba(251,191,36,.18)", bg: "rgba(239,68,68,.18)" };
-    const pillBg    = pillBgMap[pillCls] || "rgba(255,255,255,.12)";
+    const op        = st > 0 ? Math.round(sa / st * 100) : 0;
+    const pillCls    = bc(op);
+    const pillColor  = pc(op);
+    const pillBgMap  = { bn: "rgba(22,197,94,.18)", ba: "rgba(251,191,36,.18)", bg: "rgba(239,68,68,.18)" };
+    const pillBg     = pillBgMap[pillCls] || "rgba(255,255,255,.12)";
 
     /* DOJ */
     let dojLine = "";
@@ -2282,24 +1982,23 @@ function renderStaff(staff, months) {
       const diffMs  = Date.now() - dojDate.getTime();
       const yrs     = diffMs / (1000 * 60 * 60 * 24 * 365.25);
       const display = yrs < 1 ? `${Math.round(yrs*12)}m` : `${yrs.toFixed(1)}y`;
-      dojLine = `<div class="doj-tag">DOJ: ${s.doj}&ensp;<span class="doj-yrs">${display}</span></div>`;
+      dojLine = ` <span class="doj-tag">· DOJ: ${s.doj}&ensp;<span class="doj-yrs">${display}</span></span>`;
     }
 
     html += `
-    <div class="sc">
-      <div class="sc-head">
-        <div class="avatar">${initials(s.name)}</div>
-        <div class="sc-info">
-          <div class="sc-name">${s.name}</div>
-          ${dojLine}
-        </div>
-        <div class="sc-pill-wrap">
-          <span class="sc-overall-pill" style="background:${pillBg};color:${pillColor}">${op}%</span>
-          <span class="sc-period-lbl">${mLabel}</span>
-        </div>
+    <div class="card sc">
+      <div class="card-head">
+        <h2><span class="avatar" style="width:30px;height:30px;font-size:11px;border-radius:9px">${initials(s.name)}</span> ${s.name}${dojLine}</h2>
+        <span class="ch-sub">${mLabel} &nbsp;·&nbsp; <span class="stf-pill" style="background:${pillBg};color:${pillColor}">${op}%</span></span>
       </div>
-      <div class="sc-products">
-        ${prodsHTML}
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>Product</th><th>Outstanding</th><th>RD Due</th><th>Closing</th>
+            <th>Target</th><th>Achievement</th><th>Gap (Monthly)</th><th>Gap (YTD)</th>
+          </tr></thead>
+          <tbody>${rowsHTML}</tbody>
+        </table>
       </div>
     </div>`;
   });
@@ -3147,6 +2846,7 @@ function doExport() {
 
       const tgt   = isBL ? '<i class="mu">br</i>' : dispVal(exact(r.tgt), k);
       const ach   = dispVal(exact(r.ach), k);
+      const ytdAchDisp = dispVal(ytd.ytdAch, k);
       const sf    = isBL ? '<span class="mu">—</span>' : dispShortfall(ytd.shortfall, k);
       
       const outst = (metric.outstanding !== null && metric.outstanding !== undefined)
@@ -3167,7 +2867,7 @@ function doExport() {
         return `<td class="tc${hi}">${dispVal(v,k)}</td>`;
       }).join("");
 
-      return `<tr><td class="lc">${PLABEL_SHORT[k]||k}${isBL?' <i class="mu">br</i>':""}</td><td class="tc">${outst}</td><td class="tc">${rdDue}</td><td class="tc">${closing}</td><td>${tgt}</td><td>${ach}</td><td>${sf}</td>${trendTDs}</tr>`;
+      return `<tr><td class="lc">${PLABEL_SHORT[k]||k}${isBL?' <i class="mu">br</i>':""}</td><td class="tc">${outst}</td><td class="tc">${rdDue}</td><td class="tc">${closing}</td><td>${tgt}</td><td>${ach}</td><td>${ytdAchDisp}</td><td>${sf}</td>${trendTDs}</tr>`;
     }).join("");
   }
 
@@ -3192,6 +2892,7 @@ function doExport() {
     <th class="tc">Closing</th>
     <th>Target (${pname})</th>
     <th>Achieved (${pname})</th>
+    <th>YTD Achievement</th>
     <th>Short Fall from April</th>
     ${trendTHs}
   </tr></thead><tbody>${buildCombinedRows(s)}</tbody></table>
@@ -3209,12 +2910,11 @@ function doExport() {
 body{font-family:'Segoe UI',Arial,sans-serif;font-size:10.5px;color:#000;padding:4mm 5mm}
 
 /* ── page header ── */
-.ph{display:flex;justify-content:space-between;align-items:center;
-    border-bottom:1px solid #000;padding-bottom:4px;margin-bottom:6px}
-.ph-l h1{font-size:14px;font-weight:700;color:#000;line-height:1.1}
-.ph-l p{font-size:9px;color:#000;margin-top:2px}
-.ph-r{text-align:right;font-size:9px;color:#000}
-.ph-r b{font-size:11px;color:#000;display:block}
+.ph{text-align:center;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:6px}
+.ph h1{font-size:16px;font-weight:700;color:#000;line-height:1.2}
+.ph-sub{display:flex;justify-content:space-between;align-items:center;
+    margin-top:4px;font-size:9px;color:#000;text-align:left}
+.ph-sub b{font-size:9px;color:#000}
 
 /* ── section label ── */
 .sl{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
@@ -3256,11 +2956,11 @@ td.hit{font-weight:bold;}
 <body>
 
 <div class="ph">
-  <div class="ph-l">
-    <h1>Branch Review — ${branch.branchName}</h1>
-    <p>Generated: ${gen} &nbsp;·&nbsp; YTD Gap = YTD Achieved (Apr–${lastMonth}) minus YTD Target &nbsp;·&nbsp; Bold cell = hit monthly target</p>
+  <h1>Branch Review — ${branch.branchName}</h1>
+  <div class="ph-sub">
+    <span>Generated: ${gen} &nbsp;·&nbsp; YTD Gap = YTD Achieved (Apr–${lastMonth}) minus YTD Target &nbsp;·&nbsp; Bold cell = hit monthly target</span>
+    <span>Period: <b>${pname}</b> &nbsp;·&nbsp; YTD: Apr–${lastMonth}</span>
   </div>
-  <div class="ph-r"><span>Period</span><b>${pname}</b><span>YTD: Apr–${lastMonth}</span></div>
 </div>
 
 <div class="sl">Branch Summary</div>
