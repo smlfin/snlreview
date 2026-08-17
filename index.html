@@ -1177,10 +1177,11 @@ async function fetchRDOutstanding() {
     const rows = text.split('\n');
     if (rows.length < 2) return {};
 
-    const headers = rows[0].split(',').map(h => h.trim());
-    const nameIdx = headers.indexOf('Staff Members');
-    const compIdx = headers.indexOf('Company');
-    const outIdx  = headers.indexOf('Total Outstanding');
+    const headers  = rows[0].split(',').map(h => h.trim());
+    const nameIdx  = headers.indexOf('Staff Members');
+    const compIdx  = headers.indexOf('Company');
+    const outIdx   = headers.indexOf('Total Outstanding');
+    const cntIdx   = headers.indexOf('Total Count');
 
     if (nameIdx === -1 || compIdx === -1 || outIdx === -1) return {};
 
@@ -1207,8 +1208,10 @@ async function fetchRDOutstanding() {
         // Remove formatting characters to get a clean float
         const outValStr = (cols[outIdx] || "").replace(/,/g, '').replace(/"/g, '').trim();
         const outVal = parseFloat(outValStr) || 0;
-        
-        if (name) rdMap[name.toLowerCase()] = outVal;
+        const cntValStr = cntIdx !== -1 ? (cols[cntIdx] || "").replace(/,/g, '').replace(/"/g, '').trim() : "";
+        const cntVal = parseInt(cntValStr, 10) || 0;
+
+        if (name) rdMap[name.toLowerCase()] = { outstanding: outVal, count: cntVal };
       }
     }
     return rdMap;
@@ -1472,8 +1475,9 @@ async function load() {
           if (!s.metrics["RD"]) {
             s.metrics["RD"] = { monthlyAchievement: {}, monthlyTarget: 0 };
           }
-          // Set the outstanding value
-          s.metrics["RD"].outstanding = rdMap[sName];
+          // Set the outstanding value and its account count
+          s.metrics["RD"].outstanding      = rdMap[sName].outstanding;
+          s.metrics["RD"].outstandingCount = rdMap[sName].count;
         }
       });
     });
@@ -1919,6 +1923,9 @@ function renderStaff(staff, months) {
       let outCell = `<span class="stf-mu">—</span>`;
       if (OUT_CFG[k] && metric.outstanding !== null && metric.outstanding !== undefined) {
         outCell = fmtFull(metric.outstanding, k);
+        if (k === "RD" && metric.outstandingCount !== null && metric.outstandingCount !== undefined) {
+          outCell += ` <span class="mu">(${metric.outstandingCount})</span>`;
+        }
       }
       let dueCell = `<span class="stf-mu">—</span>`;
       if (k === "RD" && metric.dueCount !== null && metric.dueCount !== undefined) {
@@ -2208,12 +2215,14 @@ function openBreak(sname, pkey, metric) {
   let outstandingHTML = "";
   if (OUT_CFG[pkey] && metric.outstanding !== null && metric.outstanding !== undefined) {
     const cfg = OUT_CFG[pkey];
+    const outCountSuffix = (pkey === "RD" && metric.outstandingCount !== null && metric.outstandingCount !== undefined)
+      ? ` <span class="mu">(${metric.outstandingCount})</span>` : "";
     outstandingHTML = `
       <div class="out-block ${cfg.blockCls}">
         <div class="out-icon">${cfg.icon}</div>
         <div>
           <div class="out-lbl">${cfg.label}</div>
-          <div class="out-val">${fmtFull(metric.outstanding)}</div>
+          <div class="out-val">${fmtFull(metric.outstanding)}${outCountSuffix}</div>
         </div>
       </div>`;
   }
@@ -2300,7 +2309,7 @@ function openRDDue(sname, metric) {
   const amount        = metric.dueAmount || 0;
   const avg    = count > 0 ? amount / count : 0;
   const outstandingLine = (metric.outstanding !== null && metric.outstanding !== undefined)
-    ? `<span>RD Outstanding: <b>${fmt(metric.outstanding)}</b></span>` : "";
+    ? `<span>RD Outstanding: <b>${fmt(metric.outstanding)}</b>${(metric.outstandingCount !== null && metric.outstandingCount !== undefined) ? ` (${metric.outstandingCount})` : ""}</span>` : "";
 
   const accounts = (metric.dueAccounts || []).slice().sort((a,b) => b.dueAmount - a.dueAmount);
   const rowsHTML = accounts.length ? accounts.map(a => `
@@ -2588,10 +2597,12 @@ function openStaffProfile(sname) {
   let outCardsHTML = "";
   prodSummaries.forEach(p => {
     if (OUT_CFG[p.key] && p.metric.outstanding !== null && p.metric.outstanding !== undefined) {
+      const outCountSuffix = (p.key === "RD" && p.metric.outstandingCount !== null && p.metric.outstandingCount !== undefined)
+        ? ` <span class="mu">(${p.metric.outstandingCount})</span>` : "";
       outCardsHTML += `
         <div class="prof-out-card">
           <div class="lbl">${p.label} — ${OUT_CFG[p.key].label}</div>
-          <div class="val">${fmtFull(p.metric.outstanding, p.key)}</div>
+          <div class="val">${fmtFull(p.metric.outstanding, p.key)}${outCountSuffix}</div>
         </div>`;
     }
   });
@@ -2850,7 +2861,9 @@ function doExport() {
       const sf    = isBL ? '<span class="mu">—</span>' : dispShortfall(ytd.shortfall, k);
       
       const outst = (metric.outstanding !== null && metric.outstanding !== undefined)
-                      ? dispVal(exact(metric.outstanding), k) 
+                      ? (k === "RD" && metric.outstandingCount !== null && metric.outstandingCount !== undefined
+                          ? `${dispVal(exact(metric.outstanding), k)} <span class="mu">(${metric.outstandingCount})</span>`
+                          : dispVal(exact(metric.outstanding), k))
                       : '<span class="mu">—</span>';
 
       const rdDue = (k === "RD" && metric.dueCount !== null && metric.dueCount !== undefined)
