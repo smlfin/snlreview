@@ -1821,6 +1821,7 @@ function renderSnap(staff, months) {
       <td>${fmt(totals[k].tgt)}</td>
       <td>${fmt(totals[k].ach)}</td>
       <td style="color:${gapM<0?"#dc2626":"#16a34a"};font-weight:700">${gapM>=0?"+":""}${fmtFull(gapM,k)}</td>
+      <td>${fmtFull(ytdT.ach,k)}</td>
       <td style="color:${gapY<0?"#dc2626":"#16a34a"};font-weight:700">${gapY>=0?"+":""}${fmtFull(gapY,k)}</td>
     </tr>`;
   }
@@ -1890,7 +1891,7 @@ function renderSnap(staff, months) {
       </div>
       <div style="overflow-x:auto">
         <table>
-          <thead><tr><th>Product</th><th>Target</th><th>Achievement</th><th>Gap (Monthly)</th><th>Gap (YTD)</th></tr></thead>
+          <thead><tr><th>Product</th><th>Target</th><th>Achievement</th><th>Gap (Monthly)</th><th>YTD Achievement</th><th>Gap (YTD)</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
@@ -1970,6 +1971,7 @@ function renderStaff(staff, months) {
           <td>${fmtFull(r.tgt,k)}</td>
           <td><span class="stf-ach" onclick='openBreak(${attrJSON(s.name)},${attrJSON(k)},${attrJSON(metric)})'>${fmtFull(r.ach,k)}</span></td>
           <td style="color:${gapMCol};font-weight:700">${gapMStr}</td>
+          <td title="YTD (${ytdLabel})">${fmtFull(ytdR.ach,k)}</td>
           <td style="color:${gapYCol};font-weight:700" title="YTD (${ytdLabel})">${gapYStr}</td>
         </tr>`;
       }
@@ -2002,7 +2004,7 @@ function renderStaff(staff, months) {
         <table>
           <thead><tr>
             <th>Product</th><th>Outstanding</th><th>RD Due</th><th>Closing</th>
-            <th>Target</th><th>Achievement</th><th>Gap (Monthly)</th><th>Gap (YTD)</th>
+            <th>Target</th><th>Achievement</th><th>Gap (Monthly)</th><th>YTD Achievement</th><th>Gap (YTD)</th>
           </tr></thead>
           <tbody>${rowsHTML}</tbody>
         </table>
