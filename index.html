@@ -26,7 +26,9 @@
     <select id="staffSel" style="display:none" onchange="render();closeTopbarMenu()"></select>
     <span id="userInfo"></span>
     <button class="tb-btn" onclick="openProfilePicker();closeTopbarMenu()">👤 Employee Profile</button>
+    <button class="tb-btn" id="reviewChecklistBtn" style="display:none" onclick="openReviewChecklist();closeTopbarMenu()">📝 Review Checklist</button>
     <button class="tb-btn" onclick="doExport();closeTopbarMenu()">↓ Export</button>
+    <a class="tb-btn" href="presentation.html" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">🖥️ Presentation Mode</a>
     <button class="tb-btn danger" onclick="doLogout()">Logout</button>
   </div>
 </div>
@@ -56,16 +58,20 @@
   </div>
 </div>
 
+<!-- ━━━ REVIEW CHECKLIST — dedicated overlay for the 21 tagged reviewers only.
+     Replaces the old fixed-bottom banner (was blocking content on mobile). ━━━ -->
+<div class="overlay" id="checklistOverlay" onclick="maybeCloseChecklist(event)">
+  <div class="modal" id="checklistModal">
+    <div class="modal-head">
+      <h3 id="checklistModalTitle">📝 Review Checklist</h3>
+      <button class="mclose" onclick="closeReviewChecklist()">×</button>
+    </div>
+    <div class="modal-body" id="checklistModalBody"></div>
+  </div>
+</div>
+
 
 <script src="script.js"></script>
-
-<!-- Staff reviewed bar — shown only for staff role -->
-<div id="reviewedBar">
-  <span style="font-size:13px;color:#fff;font-weight:500" id="reviewedMsg">
-    📌 Have you reviewed your performance for today?
-  </span>
-  <button id="reviewedBtn" onclick="markReviewed()">✓ Mark as Reviewed</button>
-</div>
 
 </body>
 </html>
