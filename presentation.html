@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Branch Review — Presentation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ══════════════════════════════════════════════════════════
+       PRESENTATION MODE — entirely new styling, does not touch
+       or override style.css. Full-viewport, no page scroll,
+       screen-to-screen click navigation, projector-scale type
+       that also works on a phone (clamp()-based sizing).
+       ══════════════════════════════════════════════════════════ */
+    html, body { height: 100%; overflow: hidden; background: #0b1230; }
+    #presWrap {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: radial-gradient(circle at 20% 0%, #16224f 0%, #0b1230 55%);
+      color: #f1f5f9;
+    }
+    .pres-topbar {
+      flex: 0 0 auto;
+      display: flex; align-items: center; gap: 14px;
+      padding: clamp(8px,1.4vh,16px) clamp(14px,2.4vw,32px);
+      background: rgba(255,255,255,.04);
+      border-bottom: 1px solid rgba(255,255,255,.09);
+    }
+    .pres-brand { font-weight: 800; font-size: clamp(14px,1.6vw,20px); letter-spacing: .02em; opacity: .92; }
+    .pres-crumb { font-size: clamp(11px,1.1vw,14px); color: #93a4d6; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pres-btn {
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color: #f1f5f9;
+      padding: clamp(6px,.9vh,10px) clamp(10px,1.4vw,18px);
+      border-radius: 999px;
+      font-size: clamp(11px,1.05vw,14px);
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .pres-btn:hover { background: rgba(255,255,255,.13); }
+    .pres-btn.accent { background: #2d6bff; border-color: #2d6bff; }
+    .pres-btn.accent:hover { background: #3f78ff; }
+
+    .pres-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: clamp(14px,2.4vh,34px) clamp(16px,3vw,48px); display: flex; flex-direction: column; }
+    .pres-screen { flex: 1 1 auto; min-height: 0; display: none; flex-direction: column; }
+    .pres-screen.on { display: flex; }
+
+    .pres-h1 { font-size: clamp(20px,3vw,40px); font-weight: 800; margin-bottom: clamp(4px,1vh,10px); }
+    .pres-sub { font-size: clamp(11px,1.2vw,16px); color: #93a4d6; margin-bottom: clamp(14px,2.6vh,32px); }
+
+    /* ── Branch tile grid — click to pick, scrolls internally if it overflows
+       (data must never be clipped/inaccessible — see pres-grid below) ── */
+    .pres-grid {
+      flex: 1 1 auto; min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(clamp(120px,15vw,220px), 1fr));
+      grid-auto-rows: min-content;
+      align-content: start;
+      gap: clamp(8px,1.4vw,18px);
+      overflow-y: auto;
+    }
+    .pres-tile {
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: clamp(4px,.8vh,10px);
+      cursor: pointer;
+      transition: transform .12s, background .12s;
+      text-align: center;
+      padding: 8px;
+    }
+    .pres-tile:hover { background: rgba(45,107,255,.18); border-color: #2d6bff; transform: translateY(-2px); }
+    .pres-tile .t-icon { font-size: clamp(20px,2.6vw,34px); }
+    .pres-tile .t-name { font-size: clamp(11px,1.15vw,16px); font-weight: 700; line-height: 1.25; }
+    .pres-tile .t-sub { font-size: clamp(9px,.95vw,12px); color: #93a4d6; }
+    .pres-tile .t-ring { width: clamp(38px,4.2vw,58px); height: clamp(38px,4.2vw,58px); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: clamp(10px,1.05vw,14px); }
+
+    /* ── Month chips ── */
+    .pres-chiprow { display: flex; flex-wrap: wrap; gap: clamp(6px,1vw,12px); margin-bottom: clamp(14px,2.4vh,28px); }
+    .pres-chip {
+      padding: clamp(8px,1.2vh,14px) clamp(14px,1.8vw,22px);
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.15);
+      font-weight: 700;
+      font-size: clamp(12px,1.2vw,16px);
+      cursor: pointer;
+    }
+    .pres-chip.on { background: #2d6bff; border-color: #2d6bff; }
+    .pres-chip.quick { background: rgba(34,197,94,.15); border-color: #22c55e; }
+
+    /* (Shortfall/Excess KPI cards removed — the per-product cards below
+       already show Target and Gap, which was redundant with these.) ── */
+    /* ── Product performance — the dominant element on this screen.
+       ₹ figures are the largest text here on purpose; % is a small badge.
+       No internal scroll here on purpose — this section grows with its
+       content and the page (.pres-body) scrolls naturally. ── */
+    .pres-products { flex: 0 0 auto; display: flex; flex-direction: column; gap: clamp(4px,1vh,10px); }
+    .pres-products-head { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+    .pres-legend { display: flex; gap: clamp(12px,1.6vw,22px); font-size: clamp(10px,1vw,13px); color: #93a4d6; font-weight: 600; margin-bottom: 2px; flex: 0 0 auto; }
+    .pres-legend .leg-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+    .pres-legend .leg-dot.filled { background: #93a4d6; }
+    .pres-legend .leg-dot.hollow { border: 2px solid #93a4d6; background: transparent; }
+
+    .pres-prod-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(clamp(210px,24vw,320px),1fr));
+      grid-auto-rows: min-content;
+      align-content: start;
+      gap: clamp(8px,1.2vw,16px);
+    }
+    .pres-prod-card {
+      background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.12); border-radius: 14px;
+      padding: clamp(10px,1.5vh,18px) clamp(12px,1.5vw,20px);
+      display: flex; flex-direction: column; gap: clamp(4px,.8vh,9px);
+    }
+    .pp-head { display: flex; align-items: center; gap: 7px; }
+    .pp-dot { width: clamp(9px,1vw,13px); height: clamp(9px,1vw,13px); border-radius: 50%; flex: 0 0 auto; }
+    .pp-label { font-size: clamp(12px,1.15vw,16px); font-weight: 800; flex: 1; }
+    .pp-pct-badge { font-size: clamp(10px,1vw,13px); font-weight: 800; padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,.09); }
+    .pp-track { height: clamp(7px,1vh,11px); background: rgba(255,255,255,.08); border-radius: 999px; overflow: hidden; }
+    .pp-fill { height: 100%; border-radius: 999px; }
+    .pp-figs { display: flex; gap: 10px; }
+    .pp-fig { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: clamp(10px,.95vw,13px); color: #93a4d6; font-weight: 600; }
+    .pp-fig-line { display: flex; align-items: center; gap: 6px; }
+    .pp-fig b { color: #fff; font-weight: 800; font-size: clamp(14px,1.5vw,20px); overflow-wrap: break-word; }
+    .pp-fig-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; display: inline-block; }
+    .pp-fig-dot.hollow { background: transparent; border: 2px solid; }
+    .pp-gap { display: flex; align-items: baseline; gap: 7px; font-size: clamp(10px,.95vw,13px); font-weight: 700; padding-top: 2px; border-top: 1px dashed rgba(255,255,255,.14); }
+    .pp-gap b { margin-left: auto; font-size: clamp(14px,1.5vw,20px); font-weight: 800; }
+    .pp-gap.short { color: #fca5a5; }
+    .pp-gap.excess { color: #86efac; }
+    .pp-extra { font-size: clamp(10px,.95vw,13px); color: #c7d2fe; background: rgba(255,255,255,.05); border-radius: 8px; padding: 4px 9px; }
+    .pp-extra.pp-due { color: #fde68a; }
+    .pp-extra b { color: #fff; font-size: clamp(12px,1.1vw,15px); }
+    .pp-extra-n { color: #93a4d6; }
+
+    /* ── Compact staff strip — deliberately small; the point is quick access
+       to a name, not a data display (that's the point of the tap-through). ── */
+    .pres-staffstrip { flex: 0 0 auto; max-height: clamp(64px,11vh,96px); overflow-y: auto; display: flex; flex-wrap: wrap; gap: clamp(5px,.7vw,8px); align-content: flex-start; }
+    .pres-staff-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px; padding: 3px 12px 3px 3px; cursor: pointer;
+    }
+    .pres-staff-chip:hover { background: rgba(45,107,255,.2); border-color: #2d6bff; }
+    .pres-staff-chip .c-ring {
+      width: clamp(20px,1.9vw,26px); height: clamp(20px,1.9vw,26px); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(8.5px,.8vw,11px); font-weight: 800; color: #fff; flex: 0 0 auto;
+    }
+    .pres-staff-chip .c-name { font-size: clamp(10.5px,1vw,13px); font-weight: 700; white-space: nowrap; }
+
+    /* ── Staff detail screen ── */
+    .pres-staffhead { display: flex; align-items: center; gap: clamp(10px,1.6vw,22px); margin-bottom: clamp(10px,1.8vh,20px); flex: 0 0 auto; flex-wrap: wrap; }
+    .pres-avatar { width: clamp(48px,6vw,84px); height: clamp(48px,6vw,84px); border-radius: 50%; background: #2d6bff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: clamp(16px,2vw,30px); flex: 0 0 auto; }
+    /* Staff product cards reuse the exact same .pres-prod-card / pp-* styles
+       as the branch dashboard (see above) — same markup, same look. */
+
+    .pres-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #93a4d6; font-size: clamp(13px,1.4vw,18px); }
+    .pres-fullscreen-hint { position: fixed; bottom: 10px; right: 14px; font-size: 11px; color: #56629a; }
+
+    @media (max-width: 640px) {
+      .pres-topbar { flex-wrap: wrap; }
+      .pres-crumb { order: 3; flex-basis: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     HIDDEN DATA SHELL — exact markup script.js expects (same
+     IDs as index.html). Never shown. script.js is loaded here
+     UNMODIFIED purely as the data-loading layer; its own legacy
+     rendering into this shell is harmless because it's hidden.
+     ══════════════════════════════════════════════════════════ -->
+<div style="display:none" aria-hidden="true">
+
+  <div class="topbar">
+    <h1>Branch Review Dashboard</h1>
+    <button class="tb-hamburger" id="tbHamburger" onclick="toggleTopbarMenu()" aria-label="Menu">☰</button>
+    <div class="topbar-controls" id="topbarControls">
+      <a class='nav-link' href='/staff_dashboard'>Staff Productivity</a>
+      <span id="adminReportLink" style="display:none">
+        <a class='nav-link admin-link' href='/admin_report'>📋 Admin Report</a>
+        <a href="#" onclick="openSNLReview();return false;" class="nav-link admin-link">🏢 SNL Review</a>
+      </span>
+      <select id="branchSel" onchange="onBranch();closeTopbarMenu()" style="display:none"></select>
+      <select id="modeSel" onchange="onMode();closeTopbarMenu()">
+        <option value="all">All staff</option>
+        <option value="single">Individual</option>
+      </select>
+      <select id="staffSel" style="display:none" onchange="render();closeTopbarMenu()"></select>
+      <span id="userInfo"></span>
+      <button class="tb-btn" onclick="openProfilePicker();closeTopbarMenu()">👤 Employee Profile</button>
+      <button class="tb-btn" id="reviewChecklistBtn" style="display:none" onclick="openReviewChecklist();closeTopbarMenu()">📝 Review Checklist</button>
+      <button class="tb-btn" onclick="doExport();closeTopbarMenu()">↓ Export</button>
+      <button class="tb-btn danger" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="main" id="mainArea">
+    <div class="spinner" id="loader">⏳ Connecting to Google Sheets…</div>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="maybeClose(event)">
+    <div class="modal" id="modal">
+      <div class="modal-head">
+        <h3 id="modalTitle">Details</h3>
+        <button class="mclose" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="profOverlay" onclick="maybeCloseProfile(event)">
+    <div class="modal modal-full" id="profModal">
+      <div class="modal-head">
+        <h3 id="profModalTitle">Employee Profile</h3>
+        <button class="mclose" onclick="closeProfileModal()">×</button>
+      </div>
+      <div class="modal-body" id="profModalBody"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="checklistOverlay" onclick="maybeCloseChecklist(event)">
+    <div class="modal" id="checklistModal">
+      <div class="modal-head">
+        <h3 id="checklistModalTitle">📝 Review Checklist</h3>
+        <button class="mclose" onclick="closeReviewChecklist()">×</button>
+      </div>
+      <div class="modal-body" id="checklistModalBody"></div>
+    </div>
+  </div>
+
+</div>
+<!-- ══════════════════ END HIDDEN DATA SHELL ══════════════════ -->
+
+
+<!-- ══════════════════ VISIBLE PRESENTATION UI ══════════════════ -->
+<div id="presWrap">
+  <div class="pres-topbar">
+    <span class="pres-brand">📊 Branch Review — Presentation</span>
+    <span class="pres-crumb" id="presCrumb">Loading…</span>
+    <button class="pres-btn" id="presFsBtn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+    <button class="pres-btn" id="presBackBtn" style="display:none" onclick="presGoBack()">◂ Back</button>
+    <a class="pres-btn" href="index.html">✕ Exit</a>
+  </div>
+
+  <div class="pres-body">
+
+    <!-- Screen 1 — pick branch -->
+    <div class="pres-screen on" id="scr-branch">
+      <div class="pres-h1">Select Branch</div>
+      <div class="pres-sub">Tap a branch to review</div>
+      <div class="pres-grid" id="branchGrid"></div>
+    </div>
+
+    <!-- Screen 2 — pick month(s) -->
+    <div class="pres-screen" id="scr-month">
+      <div class="pres-h1" id="monthTitle">Select Month</div>
+      <div class="pres-sub">Tap one month, or use a quick range</div>
+      <div class="pres-chiprow" id="monthChips"></div>
+      <div class="pres-chiprow">
+        <span class="pres-chip quick" onclick="presQuickRange('ytd')">📈 Full Year (Apr–now)</span>
+        <span class="pres-chip quick" onclick="presQuickRange('current')">📅 Current Month</span>
+      </div>
+      <div style="margin-top:auto">
+        <button class="pres-btn accent" style="font-size:clamp(13px,1.4vw,18px);padding:14px 30px" onclick="presShowDashboard()">View Dashboard ▸</button>
+      </div>
+    </div>
+
+    <!-- Screen 3 — branch dashboard -->
+    <div class="pres-screen" id="scr-dash">
+      <div class="pres-h1" id="dashTitle">—</div>
+      <div class="pres-products-head" style="margin-bottom:6px">
+        <div class="pres-sub" style="margin-bottom:0">Product Performance</div>
+        <div class="pres-chiprow" id="branchModeToggle" style="margin-left:auto;margin-bottom:0"></div>
+      </div>
+      <div class="pres-products" id="dashProducts"></div>
+      <div class="pres-sub" style="margin:8px 0 4px;flex:0 0 auto">Staff — tap for full detail</div>
+      <div class="pres-staffstrip" id="dashStaffGrid"></div>
+    </div>
+
+    <!-- Screen 4 — staff detail -->
+    <div class="pres-screen" id="scr-staff">
+      <div class="pres-staffhead">
+        <div class="pres-avatar" id="staffAvatar">--</div>
+        <div>
+          <div class="pres-h1" id="staffName" style="margin-bottom:2px">—</div>
+          <div class="pres-sub" id="staffSub" style="margin-bottom:0">—</div>
+        </div>
+        <div class="pres-chiprow" id="staffModeToggle" style="margin-left:auto;margin-bottom:0"></div>
+      </div>
+      <div class="pres-products" id="staffCards"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script src="presentation.js"></script>
+
+</body>
+</html>
