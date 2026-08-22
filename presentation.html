@@ -158,6 +158,28 @@
     /* ── Staff detail screen ── */
     .pres-staffhead { display: flex; align-items: center; gap: clamp(10px,1.6vw,22px); margin-bottom: clamp(10px,1.8vh,20px); flex: 0 0 auto; flex-wrap: wrap; }
     .pres-avatar { width: clamp(48px,6vw,84px); height: clamp(48px,6vw,84px); border-radius: 50%; background: #2d6bff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: clamp(16px,2vw,30px); flex: 0 0 auto; }
+
+    /* ── Staff switcher — sticks to the bottom of the viewport while
+       scrolling the product cards above, so another staff member is one
+       tap away without leaving the screen. Deliberately tiny (name only,
+       no data) so it never competes with the cards for attention. ── */
+    .pres-staffswitch {
+      position: sticky; bottom: 0; z-index: 5;
+      margin: clamp(12px,2vh,20px) calc(-1 * clamp(16px,3vw,48px)) calc(-1 * clamp(14px,2.4vh,34px));
+      padding: clamp(8px,1.2vh,12px) clamp(16px,3vw,48px) clamp(10px,1.6vh,16px);
+      background: linear-gradient(180deg, rgba(11,18,48,0) 0%, #0e1638 28%, #0e1638 100%);
+      display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px;
+    }
+    .pres-staffswitch-chip {
+      flex: 0 0 auto;
+      padding: 4px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
+      font-size: clamp(9.5px,.85vw,11.5px); font-weight: 700;
+      color: #93a4d6; white-space: nowrap; cursor: pointer;
+    }
+    .pres-staffswitch-chip:hover { background: rgba(45,107,255,.2); border-color: #2d6bff; }
+    .pres-staffswitch-chip.on { background: #2d6bff; border-color: #2d6bff; color: #fff; }
     /* Staff product cards reuse the exact same .pres-prod-card / pp-* styles
        as the branch dashboard (see above) — same markup, same look. */
 
@@ -297,6 +319,7 @@
         <div class="pres-chiprow" id="staffModeToggle" style="margin-left:auto;margin-bottom:0"></div>
       </div>
       <div class="pres-products" id="staffCards"></div>
+      <div class="pres-staffswitch" id="staffSwitchStrip"></div>
     </div>
 
   </div>
