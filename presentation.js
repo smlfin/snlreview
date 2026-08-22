@@ -287,11 +287,30 @@ function presRenderStaffCards() {
       return presProdCardHTML(k, r.ach, r.tgt, out, due);
     }).join("") || `<div class="pres-empty">No product data for this staff member.</div>`}
     </div>`;
+
+  presRenderStaffSwitchStrip(b);
+}
+
+// Tiny sticky strip of every other staff member in this branch, so switching
+// doesn't require going back to the dashboard. Reuses presState.currentStaffList
+// (set by presShowDashboard) when available, falling back to a fresh filter.
+function presRenderStaffSwitchStrip(b) {
+  const list = (presState.currentStaffList && presState.currentStaffList.length)
+    ? presState.currentStaffList
+    : (b.staff || []).filter(x => x.name.toUpperCase() !== "TOTAL");
+  document.getElementById("staffSwitchStrip").innerHTML = list.map(st => `
+    <span class="pres-staffswitch-chip ${st.name === presState.staffName ? "on" : ""}" data-switch-name="${presEsc(st.name)}">${presEsc(st.name)}</span>
+  `).join("");
 }
 
 document.getElementById("staffModeToggle").addEventListener("click", e => {
   const chip = e.target.closest("[data-staff-mode]");
   if (chip) presSetStaffMode(chip.dataset.staffMode);
+});
+
+document.getElementById("staffSwitchStrip").addEventListener("click", e => {
+  const chip = e.target.closest("[data-switch-name]");
+  if (chip && chip.dataset.switchName !== presState.staffName) presSelectStaff(chip.dataset.switchName);
 });
 
 /* ═══════════════ SHARED AGGREGATION (mirrors renderSnap's math in script.js,
