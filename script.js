@@ -127,6 +127,17 @@ let selMonths = new Set(["Apr"]);
 let branch = null;
 let allData = [];
 
+/* ━━━ REVIEW CHECKLIST — only these EmpIDs are designated branch
+   reviewers. They get a "Review Checklist" button listing their branch's
+   staff by name, with a tick per name. Ticking writes that STAFF MEMBER's
+   reviewed status — kept in its own ReviewWarningMail.gs deployment
+   (REVIEW_API below), separate from Auth.gs. Fill in REVIEW_TAG_IDS and
+   REVIEW_API below once that Web App is deployed for this company. ━━━ */
+const REVIEW_TAG_IDS = new Set([ "8079","8023","8059","8004","8132","8030","8075","8116","8060","8173",
+    "8252","8164"
+]);
+const REVIEW_API = "https://script.google.com/macros/s/AKfycbze3MqR0-eEHHCpLHRg4uOZGbLiSJdNCEkmG7yvXEXDXVFnlVbnHEPILb9DBL_m_Fu_/exec"; // TODO: paste this company's ReviewWarningMail.gs /exec URL here
+
 function setupRoleUI() {
   document.getElementById("userInfo").textContent =
     SESSION_NAME + (SESSION_ROLE==="staff" ? " (Staff)" : SESSION_ROLE==="branch" ? " (Branch)" : " (Admin)");
@@ -134,10 +145,8 @@ function setupRoleUI() {
     document.getElementById("branchSel").style.display = "inline-block";
     document.getElementById("adminReportLink").style.display = "inline";
   }
-  if (SESSION_ROLE === "staff") {
-    const bar = document.getElementById("reviewedBar");
-    bar.style.display = "flex";
-    document.querySelector(".main").style.paddingBottom = "70px";
+  if (SESSION_ROLE === "staff" && REVIEW_TAG_IDS.has(SESSION_EMPID)) {
+    document.getElementById("reviewChecklistBtn").style.display = "inline-block";
   }
 }
 
@@ -660,35 +669,68 @@ function openSNLReview() {
   window.open("https://snlreview.netlify.app/?sso=1&" + p.toString(), "_blank");
 }
 
-async function markReviewed() {
-  const btn = document.getElementById("reviewedBtn");
-  const msg = document.getElementById("reviewedMsg");
-  btn.disabled = true; btn.textContent = "Saving…";
+/* ━━━ REVIEW CHECKLIST MODAL ━━━
+   Talks to the REVIEW_API deployment, which has a doGet (read roster) and
+   doGet-based write (tick) handler — everything is GET, on purpose, since
+   Apps Script Web Apps can't answer CORS preflight OPTIONS requests. */
+function openReviewChecklist() {
+  document.getElementById("checklistOverlay").classList.add("open");
+  document.getElementById("checklistModalBody").innerHTML = "⏳ Loading roster…";
+  loadReviewChecklist();
+}
+function closeReviewChecklist() { document.getElementById("checklistOverlay").classList.remove("open"); }
+function maybeCloseChecklist(e) { if (e.target === document.getElementById("checklistOverlay")) closeReviewChecklist(); }
+
+async function loadReviewChecklist() {
+  const body = document.getElementById("checklistModalBody");
   try {
-    const res  = await fetch(AUTH_URL, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"markReviewed",token:SESSION_TOKEN}) });
+    const url = REVIEW_API + "?action=branchRoster&token=" + encodeURIComponent(SESSION_TOKEN);
+    const res  = await fetch(url);
     const data = await res.json();
-    if (data.ok) {
-      btn.textContent = "✓ Reviewed"; btn.style.background = "#16a34a"; btn.disabled = true;
-      msg.textContent = data.alreadyMarked ? "✅ Already marked as reviewed today." : "✅ Marked as reviewed for today. Thank you!";
-    } else {
-      btn.disabled = false; btn.textContent = "✓ Mark as Reviewed";
-      alert(data.error || "Could not save. Try again.");
+    if (!data.ok) { body.innerHTML = "❌ " + (data.error || "Could not load roster."); return; }
+
+    document.getElementById("checklistModalTitle").textContent = "📝 Review Checklist — " + data.branch;
+
+    if (!data.staff || !data.staff.length) {
+      body.innerHTML = "<p>No staff found for this branch.</p>";
+      return;
     }
-  } catch(e) { btn.disabled = false; btn.textContent = "✓ Mark as Reviewed"; alert("Network error. Please try again."); }
+
+    body.innerHTML = data.staff.map(s => `
+      <div class="rc-row" data-emp="${s.empId}">
+        <div>${s.name}</div>
+        <div>
+        ${s.reviewed
+          ? `<span class="rc-done-label">✓ Reviewed</span>`
+          : `<input type="checkbox" class="rc-check" onclick="tickStaffReviewed('${s.empId}', this)">`}
+        </div>
+      </div>`).join("");
+  } catch(e) {
+    body.innerHTML = "❌ Network error. Please try again.";
+  }
 }
 
-async function checkReviewedStatus() {
-  if (SESSION_ROLE !== "staff") return;
+async function tickStaffReviewed(empId, checkboxEl) {
+  checkboxEl.disabled = true;
   try {
-    const res  = await fetch(AUTH_URL, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"markReviewed",token:SESSION_TOKEN}) });
+    const url = REVIEW_API + "?action=markStaffReviewed"
+      + "&token=" + encodeURIComponent(SESSION_TOKEN)
+      + "&empId=" + encodeURIComponent(empId);
+    const res  = await fetch(url);
     const data = await res.json();
-    if (data.ok && data.alreadyMarked) {
-      document.getElementById("reviewedBtn").textContent      = "✓ Reviewed";
-      document.getElementById("reviewedBtn").style.background = "#16a34a";
-      document.getElementById("reviewedBtn").disabled         = true;
-      document.getElementById("reviewedMsg").textContent      = "✅ Already marked as reviewed today.";
+    if (data.ok) {
+      const row = checkboxEl.closest(".rc-row");
+      row.querySelector(":scope > div:last-child").outerHTML = `<span class="rc-done-label">✓ Reviewed</span>`;
+    } else {
+      alert(data.error || "Could not save. Try again.");
+      checkboxEl.checked = false;
+      checkboxEl.disabled = false;
     }
-  } catch(e) {}
+  } catch(e) {
+    alert("Network error. Please try again.");
+    checkboxEl.checked = false;
+    checkboxEl.disabled = false;
+  }
 }
 
 function getMonths() { return MONTHS.filter(m => selMonths.has(m)); }
@@ -2420,4 +2462,4 @@ ${staffHTML}
 }
 
 /* ── INIT ── */
-load().then(() => checkReviewedStatus());
+load();
