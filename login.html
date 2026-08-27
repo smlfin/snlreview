@@ -104,7 +104,7 @@
 </div>
 
 <script>
-const AUTH_URL = "https://script.google.com/macros/s/AKfycbzTPB10fdiNYo2mRF_pIsUuPfOhFW02_omSZYCPhPq_ybtVYqz5HWrbB7ia7C4lb5j7-g/exec";
+const AUTH_URL = "https://script.google.com/macros/s/AKfycbwR1JK7ulPcDfQuRF5U9goL0DhtcktpMIc_H-SYBd0y9-q2qEJ2tOt2KzHRycMgplwX/exec";
 
 let currentTab = "admin";
 
@@ -193,17 +193,6 @@ function todayStr() {
     String(d.getMonth()+1).padStart(2,"0") + "-" +
     String(d.getDate()).padStart(2,"0");
 }
-
-// SSO: arriving from SML dashboard with ?sso=1 — seed localStorage and skip login
-(function ssoSeed() {
-  const p = new URLSearchParams(window.location.search);
-  if (p.get("sso") !== "1") return;
-  ["brToken","brRole","brBranch","brName","brEmpId","brLoginDate"].forEach(k => {
-    const v = p.get(k);
-    if (v) localStorage.setItem(k, v);
-  });
-  window.history.replaceState(null, "", window.location.pathname); // strip params from URL
-})();
 
 // If already logged in today, redirect immediately
 (function checkSession() {
