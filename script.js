@@ -134,7 +134,7 @@ let allData = [];
    (REVIEW_API below), separate from Auth.gs. Fill in REVIEW_TAG_IDS and
    REVIEW_API below once that Web App is deployed for this company. ━━━ */
 const REVIEW_TAG_IDS = new Set([ "8079","8023","8059","8004","8132","8030","8075","8116","8060","8173",
-    "8252","8164"
+    "8252","8164", "8266", "8267"
 ]);
 const REVIEW_API = "https://script.google.com/macros/s/AKfycbze3MqR0-eEHHCpLHRg4uOZGbLiSJdNCEkmG7yvXEXDXVFnlVbnHEPILb9DBL_m_Fu_/exec"; // TODO: paste this company's ReviewWarningMail.gs /exec URL here
 
