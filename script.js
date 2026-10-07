@@ -447,7 +447,7 @@ async function fetchRDDue(empRoster) {
       const dueAmount = instAmt * dueCnt;          // the ONLY multiplication: Inst_Amount × Due_Amt
 
       const shareName = shareIdx !== -1 ? (cols[shareIdx] || "").trim() : "";
-      const key = name.toLowerCase();
+      const key = name.replace(/\s+/g, ' ').trim().toLowerCase();
       if (!dueMap[key]) dueMap[key] = { accountCount: 0, installmentTotal: 0, amount: 0, accounts: [] };
       dueMap[key].accountCount     += 1;        // ← one per due ACCOUNT, not per installment
       dueMap[key].installmentTotal += dueCnt;   // total pending installment-months (informational)
@@ -573,10 +573,11 @@ async function load() {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     // ━━━ INJECT RD DUE (count + amount) FROM CSV ━━━
-    const rdDueMap = await fetchRDDue();
+    const empRosterForDue = await fetchEmployeeRoster();
+    const rdDueMap = await fetchRDDue(empRosterForDue);
     allData.forEach(b => {
       (b.staff || []).forEach(s => {
-        const sName = s.name.trim().toLowerCase();
+        const sName = s.name.replace(/\s+/g, ' ').trim().toLowerCase();
         if (rdDueMap[sName] !== undefined) {
           if (!s.metrics["RD"]) {
             s.metrics["RD"] = { monthlyAchievement: {}, monthlyTarget: 0 };
