@@ -1,10 +1,6 @@
-/* ══════════════════════════════════════════════════════════
-   PRESENTATION MODE
-   New, standalone file. Does NOT modify script.js — only reads
-   its already-loaded globals (allData, MONTHS, PLABEL, PROD_COLOR,
-   getEffectiveMonths, calc, fmt, fmtFull, initials) once load()
-   (inside script.js) has finished populating allData.
-   ══════════════════════════════════════════════════════════ */
+// PRESENTATION MODE (standalone; does not modify script.js).
+// Reads script.js globals (allData, MONTHS, PLABEL, PROD_COLOR, getEffectiveMonths,
+// calc, fmt, fmtFull, initials) once load() has populated allData.
 
 const presState = {
   screen: "branch",      // branch | month | dash | staff
@@ -76,7 +72,7 @@ function presRenderBranchGrid() {
     const agg = presAggregateBranch(b, presCurrentOrDefaultMonths());
     const pct = presOverallPct(agg);
     return `<div class="pres-tile" data-branch-idx="${i}">
-      <div class="t-ring" style="background:${presPctBg(pct)};color:#fff">${pct}%</div>
+      <div class="t-ring" style="background:${presPctBg(pct)};border:2px solid ${presPctColor(pct)};color:#0f172a">${pct}%</div>
       <div class="t-name">${presEsc(b.branchName)}</div>
       <div class="t-sub">${(b.staff||[]).filter(s=>s.name.toUpperCase()!=="TOTAL").length} staff</div>
     </div>`;
@@ -137,14 +133,14 @@ function presQuickRange(kind) {
 function presProdCardHTML(k, ach, tgt, outstanding, due) {
   const pct = tgt > 0 ? Math.round(ach / tgt * 100) : 100;
   const gap = ach - tgt;
-  const color = PROD_COLOR[k] || "#2d6bff";
+  const color = PROD_COLOR[k] || "#2d5fd0";
   const outRow = outstanding ? `<div class="pp-extra">📦 Outstanding: <b>${fmtFull(outstanding.amount,k)}</b>${outstanding.count?` <span class="pp-extra-n">(${outstanding.count} a/c)</span>`:""}</div>` : "";
   const dueRow = due ? `<div class="pp-extra pp-due">⏰ Due: <b>${fmtFull(due.amount,k)}</b>${due.count?` <span class="pp-extra-n">(${due.count} a/c)</span>`:""}</div>` : "";
   return `<div class="pres-prod-card">
     <div class="pp-head">
       <span class="pp-dot" style="background:${color}"></span>
       <span class="pp-label">${PLABEL[k]||k}</span>
-      <span class="pp-pct-badge" style="color:${presPctColor(pct)}">${pct}%</span>
+      <span class="pp-pct-badge" style="color:#0f172a">${pct}%</span>
     </div>
     <div class="pp-track"><div class="pp-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div>
     <div class="pp-figs">
@@ -185,7 +181,7 @@ function presShowDashboard() {
   document.getElementById("dashStaffGrid").innerHTML = agg.staff.map((s, i) => {
     const spct = presStaffOverallPct(s, months);
     return `<div class="pres-staff-chip" data-staff-idx="${i}">
-      <span class="c-ring" style="background:${presPctBg(spct)}">${spct}%</span>
+      <span class="c-ring" style="background:${presPctBg(spct)};border:1.5px solid ${presPctColor(spct)}">${spct}%</span>
       <span class="c-name">${presEsc(s.name)}</span>
     </div>`;
   }).join("");
@@ -405,5 +401,5 @@ function presServiceStr(dojStr) {
   return yrs + (yrs === 1 ? " yr " : " yrs ") + mos + (mos === 1 ? " mo" : " mos");
 }
 
-function presPctColor(p) { return p >= 100 ? "#4ade80" : p >= 75 ? "#fbbf24" : "#f87171"; }
-function presPctBg(p)    { return p >= 100 ? "#16a34a" : p >= 75 ? "#d97706" : "#dc2626"; }
+function presPctColor(p) { return p >= 100 ? "#16a34a" : p >= 75 ? "#d97706" : "#dc2626"; }  // border/accent only, never text
+function presPctBg(p)    { return p >= 100 ? "#bbf7d0" : p >= 75 ? "#fde68a" : "#fecaca"; }  // light tint, dark text on top
