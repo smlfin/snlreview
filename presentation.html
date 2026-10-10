@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="utf-8">
   <title>Branch Review — Presentation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap" rel="stylesheet">
@@ -12,27 +13,28 @@
        screen-to-screen click navigation, projector-scale type
        that also works on a phone (clamp()-based sizing).
        ══════════════════════════════════════════════════════════ */
-    html, body { height: 100%; overflow: hidden; background: #0b1230; }
+    html, body { height: 100%; overflow: hidden; background: #e6eefc; }
     #presWrap {
       position: fixed; inset: 0;
       display: flex; flex-direction: column;
       font-family: 'Inter', system-ui, sans-serif;
-      background: radial-gradient(circle at 20% 0%, #16224f 0%, #0b1230 55%);
-      color: #f1f5f9;
+      background: linear-gradient(160deg, #eaf2ff 0%, #dbe8fb 55%, #e3f0fa 100%);
+      color: #0f172a;
     }
     .pres-topbar {
       flex: 0 0 auto;
       display: flex; align-items: center; gap: 14px;
       padding: clamp(8px,1.4vh,16px) clamp(14px,2.4vw,32px);
-      background: rgba(255,255,255,.04);
-      border-bottom: 1px solid rgba(255,255,255,.09);
+      background: #cfe0fa;
+      border-bottom: 1px solid #9db8e6;
     }
-    .pres-brand { font-weight: 800; font-size: clamp(14px,1.6vw,20px); letter-spacing: .02em; opacity: .92; }
-    .pres-crumb { font-size: clamp(11px,1.1vw,14px); color: #93a4d6; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pres-brand { font-weight: 800; font-size: clamp(14px,1.6vw,20px); letter-spacing: .02em; color: #0f172a; }
+    .pres-crumb { font-size: clamp(11px,1.1vw,14px); color: #1e293b; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .pres-btn {
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.06);
-      color: #f1f5f9;
+      border: 1px solid #7c9bd6;
+      background: #f4f8ff;
+      color: #0f172a;
+      text-decoration: none; display: inline-block;
       padding: clamp(6px,.9vh,10px) clamp(10px,1.4vw,18px);
       border-radius: 999px;
       font-size: clamp(11px,1.05vw,14px);
@@ -40,16 +42,16 @@
       cursor: pointer;
       white-space: nowrap;
     }
-    .pres-btn:hover { background: rgba(255,255,255,.13); }
-    .pres-btn.accent { background: #2d6bff; border-color: #2d6bff; }
-    .pres-btn.accent:hover { background: #3f78ff; }
+    .pres-btn:hover { background: #ffffff; }
+    .pres-btn.accent { background: #a9c8ff; border-color: #2d5fd0; color: #0f172a; }
+    .pres-btn.accent:hover { background: #bcd5ff; }
 
     .pres-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: clamp(14px,2.4vh,34px) clamp(16px,3vw,48px); display: flex; flex-direction: column; }
     .pres-screen { flex: 1 1 auto; min-height: 0; display: none; flex-direction: column; }
     .pres-screen.on { display: flex; }
 
-    .pres-h1 { font-size: clamp(20px,3vw,40px); font-weight: 800; margin-bottom: clamp(4px,1vh,10px); }
-    .pres-sub { font-size: clamp(11px,1.2vw,16px); color: #93a4d6; margin-bottom: clamp(14px,2.6vh,32px); }
+    .pres-h1 { font-size: clamp(20px,3vw,40px); font-weight: 800; color: #0f172a; margin-bottom: clamp(4px,1vh,10px); }
+    .pres-sub { font-size: clamp(11px,1.2vw,16px); color: #334155; margin-bottom: clamp(14px,2.6vh,32px); }
 
     /* ── Branch tile grid — click to pick, scrolls internally if it overflows
        (data must never be clipped/inaccessible — see pres-grid below) ── */
@@ -63,8 +65,10 @@
       overflow-y: auto;
     }
     .pres-tile {
-      background: rgba(255,255,255,.055);
-      border: 1px solid rgba(255,255,255,.12);
+      background: #ffffff;
+      border: 1px solid #b4c9ee;
+      box-shadow: 0 1px 3px rgba(30,58,138,.10);
+      color: #0f172a;
       border-radius: 16px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: clamp(4px,.8vh,10px);
@@ -73,25 +77,27 @@
       text-align: center;
       padding: 8px;
     }
-    .pres-tile:hover { background: rgba(45,107,255,.18); border-color: #2d6bff; transform: translateY(-2px); }
+    .pres-tile:hover { background: #e3eeff; border-color: #2d5fd0; transform: translateY(-2px); }
     .pres-tile .t-icon { font-size: clamp(20px,2.6vw,34px); }
     .pres-tile .t-name { font-size: clamp(11px,1.15vw,16px); font-weight: 700; line-height: 1.25; }
-    .pres-tile .t-sub { font-size: clamp(9px,.95vw,12px); color: #93a4d6; }
-    .pres-tile .t-ring { width: clamp(38px,4.2vw,58px); height: clamp(38px,4.2vw,58px); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: clamp(10px,1.05vw,14px); }
+    .pres-tile .t-sub { font-size: clamp(9px,.95vw,12px); color: #334155; }
+    .pres-tile .t-ring { width: clamp(38px,4.2vw,58px); height: clamp(38px,4.2vw,58px); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: clamp(10px,1.05vw,14px); color: #0f172a; }
 
     /* ── Month chips ── */
     .pres-chiprow { display: flex; flex-wrap: wrap; gap: clamp(6px,1vw,12px); margin-bottom: clamp(14px,2.4vh,28px); }
     .pres-chip {
       padding: clamp(8px,1.2vh,14px) clamp(14px,1.8vw,22px);
       border-radius: 999px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.15);
+      background: #f4f8ff;
+      border: 1px solid #7c9bd6;
+      color: #0f172a;
       font-weight: 700;
       font-size: clamp(12px,1.2vw,16px);
       cursor: pointer;
     }
-    .pres-chip.on { background: #2d6bff; border-color: #2d6bff; }
-    .pres-chip.quick { background: rgba(34,197,94,.15); border-color: #22c55e; }
+    .pres-chip:hover { background: #ffffff; }
+    .pres-chip.on { background: #a9c8ff; border-color: #2d5fd0; color: #0f172a; }
+    .pres-chip.quick { background: #c9f0d6; border-color: #2e9e5b; color: #0f172a; }
 
     /* (Shortfall/Excess KPI cards removed — the per-product cards below
        already show Target and Gap, which was redundant with these.) ── */
@@ -101,10 +107,10 @@
        content and the page (.pres-body) scrolls naturally. ── */
     .pres-products { flex: 0 0 auto; display: flex; flex-direction: column; gap: clamp(4px,1vh,10px); }
     .pres-products-head { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-    .pres-legend { display: flex; gap: clamp(12px,1.6vw,22px); font-size: clamp(10px,1vw,13px); color: #93a4d6; font-weight: 600; margin-bottom: 2px; flex: 0 0 auto; }
+    .pres-legend { display: flex; gap: clamp(12px,1.6vw,22px); font-size: clamp(10px,1vw,13px); color: #1e293b; font-weight: 600; margin-bottom: 2px; flex: 0 0 auto; }
     .pres-legend .leg-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
-    .pres-legend .leg-dot.filled { background: #93a4d6; }
-    .pres-legend .leg-dot.hollow { border: 2px solid #93a4d6; background: transparent; }
+    .pres-legend .leg-dot.filled { background: #334155; }
+    .pres-legend .leg-dot.hollow { border: 2px solid #334155; background: transparent; }
 
     .pres-prod-grid {
       display: grid;
@@ -114,50 +120,50 @@
       gap: clamp(8px,1.2vw,16px);
     }
     .pres-prod-card {
-      background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.12); border-radius: 14px;
+      background: #ffffff; border: 1px solid #b4c9ee; box-shadow: 0 1px 3px rgba(30,58,138,.10); color: #0f172a; border-radius: 14px;
       padding: clamp(10px,1.5vh,18px) clamp(12px,1.5vw,20px);
       display: flex; flex-direction: column; gap: clamp(4px,.8vh,9px);
     }
     .pp-head { display: flex; align-items: center; gap: 7px; }
     .pp-dot { width: clamp(9px,1vw,13px); height: clamp(9px,1vw,13px); border-radius: 50%; flex: 0 0 auto; }
     .pp-label { font-size: clamp(12px,1.15vw,16px); font-weight: 800; flex: 1; }
-    .pp-pct-badge { font-size: clamp(10px,1vw,13px); font-weight: 800; padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,.09); }
-    .pp-track { height: clamp(7px,1vh,11px); background: rgba(255,255,255,.08); border-radius: 999px; overflow: hidden; }
+    .pp-pct-badge { font-size: clamp(10px,1vw,13px); font-weight: 800; padding: 2px 9px; border-radius: 999px; background: #eef3fd; border: 1px solid #c3d3ee; }
+    .pp-track { height: clamp(7px,1vh,11px); background: #dde6f5; border-radius: 999px; overflow: hidden; }
     .pp-fill { height: 100%; border-radius: 999px; }
     .pp-figs { display: flex; gap: 10px; }
-    .pp-fig { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: clamp(10px,.95vw,13px); color: #93a4d6; font-weight: 600; }
+    .pp-fig { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: clamp(10px,.95vw,13px); color: #1e293b; font-weight: 600; }
     .pp-fig-line { display: flex; align-items: center; gap: 6px; }
-    .pp-fig b { color: #fff; font-weight: 800; font-size: clamp(14px,1.5vw,20px); overflow-wrap: break-word; }
+    .pp-fig b { color: #0f172a; font-weight: 800; font-size: clamp(14px,1.5vw,20px); overflow-wrap: break-word; }
     .pp-fig-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; display: inline-block; }
     .pp-fig-dot.hollow { background: transparent; border: 2px solid; }
-    .pp-gap { display: flex; align-items: baseline; gap: 7px; font-size: clamp(10px,.95vw,13px); font-weight: 700; padding-top: 2px; border-top: 1px dashed rgba(255,255,255,.14); }
+    .pp-gap { display: flex; align-items: baseline; gap: 7px; font-size: clamp(10px,.95vw,13px); font-weight: 700; padding-top: 2px; border-top: 1px dashed #9db8e6; }
     .pp-gap b { margin-left: auto; font-size: clamp(14px,1.5vw,20px); font-weight: 800; }
-    .pp-gap.short { color: #fca5a5; }
-    .pp-gap.excess { color: #86efac; }
-    .pp-extra { font-size: clamp(10px,.95vw,13px); color: #c7d2fe; background: rgba(255,255,255,.05); border-radius: 8px; padding: 4px 9px; }
-    .pp-extra.pp-due { color: #fde68a; }
-    .pp-extra b { color: #fff; font-size: clamp(12px,1.1vw,15px); }
-    .pp-extra-n { color: #93a4d6; }
+    .pp-gap.short { color: #991b1b; }
+    .pp-gap.excess { color: #166534; }
+    .pp-extra { font-size: clamp(10px,.95vw,13px); color: #0f172a; background: #eaf1ff; border: 1px solid #c3d3ee; border-radius: 8px; padding: 4px 9px; }
+    .pp-extra.pp-due { color: #0f172a; background: #fef3c7; border-color: #f2d27a; }
+    .pp-extra b { color: #0f172a; font-size: clamp(12px,1.1vw,15px); }
+    .pp-extra-n { color: #334155; }
 
     /* ── Compact staff strip — deliberately small; the point is quick access
        to a name, not a data display (that's the point of the tap-through). ── */
     .pres-staffstrip { flex: 0 0 auto; max-height: clamp(64px,11vh,96px); overflow-y: auto; display: flex; flex-wrap: wrap; gap: clamp(5px,.7vw,8px); align-content: flex-start; }
     .pres-staff-chip {
       display: flex; align-items: center; gap: 6px;
-      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
+      background: #ffffff; border: 1px solid #9db8e6; color: #0f172a;
       border-radius: 999px; padding: 3px 12px 3px 3px; cursor: pointer;
     }
-    .pres-staff-chip:hover { background: rgba(45,107,255,.2); border-color: #2d6bff; }
+    .pres-staff-chip:hover { background: #e3eeff; border-color: #2d5fd0; }
     .pres-staff-chip .c-ring {
       width: clamp(20px,1.9vw,26px); height: clamp(20px,1.9vw,26px); border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: clamp(8.5px,.8vw,11px); font-weight: 800; color: #fff; flex: 0 0 auto;
+      font-size: clamp(8.5px,.8vw,11px); font-weight: 800; color: #0f172a; flex: 0 0 auto;
     }
     .pres-staff-chip .c-name { font-size: clamp(10.5px,1vw,13px); font-weight: 700; white-space: nowrap; }
 
     /* ── Staff detail screen ── */
     .pres-staffhead { display: flex; align-items: center; gap: clamp(10px,1.6vw,22px); margin-bottom: clamp(10px,1.8vh,20px); flex: 0 0 auto; flex-wrap: wrap; }
-    .pres-avatar { width: clamp(48px,6vw,84px); height: clamp(48px,6vw,84px); border-radius: 50%; background: #2d6bff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: clamp(16px,2vw,30px); flex: 0 0 auto; }
+    .pres-avatar { width: clamp(48px,6vw,84px); height: clamp(48px,6vw,84px); border-radius: 50%; background: #a9c8ff; border: 2px solid #2d5fd0; color: #0f172a; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: clamp(16px,2vw,30px); flex: 0 0 auto; }
 
     /* ── Staff switcher — sticks to the bottom of the viewport while
        scrolling the product cards above, so another staff member is one
@@ -167,24 +173,24 @@
       position: sticky; bottom: 0; z-index: 5;
       margin: clamp(12px,2vh,20px) calc(-1 * clamp(16px,3vw,48px)) calc(-1 * clamp(14px,2.4vh,34px));
       padding: clamp(8px,1.2vh,12px) clamp(16px,3vw,48px) clamp(10px,1.6vh,16px);
-      background: linear-gradient(180deg, rgba(11,18,48,0) 0%, #0e1638 28%, #0e1638 100%);
+      background: linear-gradient(180deg, rgba(219,232,251,0) 0%, #dbe8fb 28%, #dbe8fb 100%);
       display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px;
     }
     .pres-staffswitch-chip {
       flex: 0 0 auto;
       padding: 4px 11px;
       border-radius: 999px;
-      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
+      background: #ffffff; border: 1px solid #9db8e6;
       font-size: clamp(9.5px,.85vw,11.5px); font-weight: 700;
-      color: #93a4d6; white-space: nowrap; cursor: pointer;
+      color: #0f172a; white-space: nowrap; cursor: pointer;
     }
-    .pres-staffswitch-chip:hover { background: rgba(45,107,255,.2); border-color: #2d6bff; }
-    .pres-staffswitch-chip.on { background: #2d6bff; border-color: #2d6bff; color: #fff; }
+    .pres-staffswitch-chip:hover { background: #e3eeff; border-color: #2d5fd0; }
+    .pres-staffswitch-chip.on { background: #a9c8ff; border-color: #2d5fd0; color: #0f172a; }
     /* Staff product cards reuse the exact same .pres-prod-card / pp-* styles
        as the branch dashboard (see above) — same markup, same look. */
 
-    .pres-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #93a4d6; font-size: clamp(13px,1.4vw,18px); }
-    .pres-fullscreen-hint { position: fixed; bottom: 10px; right: 14px; font-size: 11px; color: #56629a; }
+    .pres-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #1e293b; font-size: clamp(13px,1.4vw,18px); }
+    .pres-fullscreen-hint { position: fixed; bottom: 10px; right: 14px; font-size: 11px; color: #334155; }
 
     @media (max-width: 640px) {
       .pres-topbar { flex-wrap: wrap; }
