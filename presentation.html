@@ -224,9 +224,13 @@
 
     /* Outstanding / Due */
     .pp-extra     { font-size: clamp(11px,1.05vw,14px); font-weight: 700; color: #1e40af; background: #eff6ff; border-radius: 8px; padding: 5px 11px; border: 1px solid #bfdbfe; }
-    .pp-extra.pp-due { color: #92400e; background: #fffbeb; border-color: #fde68a; }
+    .pp-extra.pp-due    { color: #92400e; background: #fffbeb; border-color: #fde68a; }
+    .pp-extra.pp-inflow { color: #065f46; background: #ecfdf5; border-color: #6ee7b7; }
     .pp-extra b   { color: #0f172a; font-size: clamp(13px,1.2vw,17px); }
     .pp-extra-n   { color: #475569; }
+    /* Outstanding + Due on one line — each takes half the width */
+    .pp-extra-row { display: flex; gap: 6px; }
+    .pp-extra-half { flex: 1 1 0; min-width: 0; }
 
     /* ══════════════════════════════════════════════════════════
        SCREEN 4 — STAFF TOP CARD
