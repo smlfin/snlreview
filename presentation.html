@@ -1,213 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
   <title>Branch Review — Presentation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style>
     /* ══════════════════════════════════════════════════════════
-       PRESENTATION MODE — entirely new styling, does not touch
-       or override style.css. Full-viewport, no page scroll,
-       screen-to-screen click navigation, projector-scale type
-       that also works on a phone (clamp()-based sizing).
+       PRESENTATION MODE — Light theme, projector-optimised
+       Monthly + YTD side-by-side · No toggle needed
+       Staff + legend at TOP · Figures never truncated
        ══════════════════════════════════════════════════════════ */
-    html, body { height: 100%; overflow: hidden; background: #e6eefc; }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; background: #f0f4f8; margin: 0; padding: 0; }
+
     #presWrap {
       position: fixed; inset: 0;
       display: flex; flex-direction: column;
       font-family: 'Inter', system-ui, sans-serif;
-      background: linear-gradient(160deg, #eaf2ff 0%, #dbe8fb 55%, #e3f0fa 100%);
+      background: #f0f4f8;
       color: #0f172a;
     }
+
+    /* ── Top bar ── */
     .pres-topbar {
       flex: 0 0 auto;
       display: flex; align-items: center; gap: 14px;
-      padding: clamp(8px,1.4vh,16px) clamp(14px,2.4vw,32px);
-      background: #cfe0fa;
-      border-bottom: 1px solid #9db8e6;
+      padding: clamp(10px,1.5vh,18px) clamp(16px,2.4vw,36px);
+      background: #ffffff;
+      border-bottom: 3px solid #1e3a8a;
+      box-shadow: 0 2px 8px rgba(0,0,0,.10);
     }
-    .pres-brand { font-weight: 800; font-size: clamp(14px,1.6vw,20px); letter-spacing: .02em; color: #0f172a; }
-    .pres-crumb { font-size: clamp(11px,1.1vw,14px); color: #1e293b; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pres-brand { font-weight: 800; font-size: clamp(15px,1.8vw,24px); letter-spacing: .01em; color: #1e3a8a; }
+    .pres-crumb { font-size: clamp(12px,1.15vw,16px); color: #475569; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .pres-btn {
-      border: 1px solid #7c9bd6;
-      background: #f4f8ff;
-      color: #0f172a;
-      text-decoration: none; display: inline-block;
-      padding: clamp(6px,.9vh,10px) clamp(10px,1.4vw,18px);
-      border-radius: 999px;
-      font-size: clamp(11px,1.05vw,14px);
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
+      border: 2px solid #1e3a8a; background: #ffffff; color: #1e3a8a;
+      padding: clamp(6px,.9vh,10px) clamp(12px,1.4vw,20px);
+      border-radius: 999px; font-size: clamp(12px,1.1vw,15px); font-weight: 800;
+      cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block;
+      transition: background .12s, color .12s;
     }
-    .pres-btn:hover { background: #ffffff; }
-    .pres-btn.accent { background: #a9c8ff; border-color: #2d5fd0; color: #0f172a; }
-    .pres-btn.accent:hover { background: #bcd5ff; }
+    .pres-btn:hover { background: #1e3a8a; color: #ffffff; }
+    .pres-btn.accent { background: #1e3a8a; color: #ffffff; border-color: #1e3a8a; }
+    .pres-btn.accent:hover { background: #1e40af; border-color: #1e40af; }
 
-    .pres-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: clamp(14px,2.4vh,34px) clamp(16px,3vw,48px); display: flex; flex-direction: column; }
+    /* ── Body & screens ── */
+    .pres-body {
+      flex: 1 1 auto; min-height: 0; overflow-y: auto;
+      padding: clamp(16px,2.4vh,36px) clamp(18px,3vw,52px);
+      display: flex; flex-direction: column;
+    }
     .pres-screen { flex: 1 1 auto; min-height: 0; display: none; flex-direction: column; }
     .pres-screen.on { display: flex; }
 
-    .pres-h1 { font-size: clamp(20px,3vw,40px); font-weight: 800; color: #0f172a; margin-bottom: clamp(4px,1vh,10px); }
-    .pres-sub { font-size: clamp(11px,1.2vw,16px); color: #334155; margin-bottom: clamp(14px,2.6vh,32px); }
+    .pres-h1 { font-size: clamp(24px,3.4vw,48px); font-weight: 800; color: #0f172a; margin-bottom: clamp(4px,1vh,10px); letter-spacing: -.01em; }
+    .pres-sub { font-size: clamp(13px,1.3vw,18px); color: #334155; font-weight: 700; margin-bottom: clamp(14px,2.6vh,32px); }
 
-    /* ── Branch tile grid — click to pick, scrolls internally if it overflows
-       (data must never be clipped/inaccessible — see pres-grid below) ── */
+    /* ── Screen 1 — Branch tiles ── */
     .pres-grid {
       flex: 1 1 auto; min-height: 0;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(clamp(120px,15vw,220px), 1fr));
-      grid-auto-rows: min-content;
-      align-content: start;
-      gap: clamp(8px,1.4vw,18px);
-      overflow-y: auto;
+      grid-template-columns: repeat(auto-fit, minmax(clamp(130px,16vw,230px), 1fr));
+      grid-auto-rows: min-content; align-content: start;
+      gap: clamp(10px,1.6vw,22px); overflow-y: auto;
     }
     .pres-tile {
-      background: #ffffff;
-      border: 1px solid #b4c9ee;
-      box-shadow: 0 1px 3px rgba(30,58,138,.10);
-      color: #0f172a;
-      border-radius: 16px;
+      background: #ffffff; border: 2px solid #cbd5e1; border-radius: 16px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: clamp(4px,.8vh,10px);
-      cursor: pointer;
-      transition: transform .12s, background .12s;
-      text-align: center;
-      padding: 8px;
+      gap: clamp(6px,1vh,12px); cursor: pointer;
+      transition: transform .12s, border-color .12s, box-shadow .12s;
+      text-align: center; padding: 12px 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07);
     }
-    .pres-tile:hover { background: #e3eeff; border-color: #2d5fd0; transform: translateY(-2px); }
-    .pres-tile .t-icon { font-size: clamp(20px,2.6vw,34px); }
-    .pres-tile .t-name { font-size: clamp(11px,1.15vw,16px); font-weight: 700; line-height: 1.25; }
-    .pres-tile .t-sub { font-size: clamp(9px,.95vw,12px); color: #334155; }
-    .pres-tile .t-ring { width: clamp(38px,4.2vw,58px); height: clamp(38px,4.2vw,58px); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: clamp(10px,1.05vw,14px); color: #0f172a; }
+    .pres-tile:hover { border-color: #1e3a8a; box-shadow: 0 4px 16px rgba(30,58,138,.18); transform: translateY(-3px); }
+    .pres-tile .t-name { font-size: clamp(13px,1.3vw,18px); font-weight: 800; color: #0f172a; line-height: 1.2; }
+    .pres-tile .t-sub  { font-size: clamp(10px,1vw,14px); color: #475569; font-weight: 700; }
+    .pres-tile .t-ring {
+      width: clamp(42px,5vw,66px); height: clamp(42px,5vw,66px); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: clamp(11px,1.2vw,16px); color: #fff;
+    }
 
-    /* ── Month chips ── */
-    .pres-chiprow { display: flex; flex-wrap: wrap; gap: clamp(6px,1vw,12px); margin-bottom: clamp(14px,2.4vh,28px); }
+    /* ── Screen 2 — Month chips ── */
+    .pres-chiprow { display: flex; flex-wrap: wrap; gap: clamp(8px,1vw,14px); margin-bottom: clamp(14px,2.4vh,28px); }
     .pres-chip {
-      padding: clamp(8px,1.2vh,14px) clamp(14px,1.8vw,22px);
-      border-radius: 999px;
-      background: #f4f8ff;
-      border: 1px solid #7c9bd6;
-      color: #0f172a;
-      font-weight: 700;
-      font-size: clamp(12px,1.2vw,16px);
-      cursor: pointer;
+      padding: clamp(9px,1.3vh,16px) clamp(16px,2vw,26px); border-radius: 999px;
+      background: #ffffff; border: 2px solid #94a3b8;
+      font-weight: 800; font-size: clamp(13px,1.3vw,18px); color: #1e293b;
+      cursor: pointer; transition: background .1s, border-color .1s, color .1s;
     }
-    .pres-chip:hover { background: #ffffff; }
-    .pres-chip.on { background: #a9c8ff; border-color: #2d5fd0; color: #0f172a; }
-    .pres-chip.quick { background: #c9f0d6; border-color: #2e9e5b; color: #0f172a; }
+    .pres-chip:hover  { border-color: #1e3a8a; color: #1e3a8a; }
+    .pres-chip.on     { background: #1e3a8a; border-color: #1e3a8a; color: #ffffff; }
+    .pres-chip.quick  { background: #f0fdf4; border-color: #16a34a; color: #14532d; }
+    .pres-chip.quick:hover { background: #16a34a; color: #fff; }
 
-    /* (Shortfall/Excess KPI cards removed — the per-product cards below
-       already show Target and Gap, which was redundant with these.) ── */
-    /* ── Product performance — the dominant element on this screen.
-       ₹ figures are the largest text here on purpose; % is a small badge.
-       No internal scroll here on purpose — this section grows with its
-       content and the page (.pres-body) scrolls naturally. ── */
-    .pres-products { flex: 0 0 auto; display: flex; flex-direction: column; gap: clamp(4px,1vh,10px); }
-    .pres-products-head { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-    .pres-legend { display: flex; gap: clamp(12px,1.6vw,22px); font-size: clamp(10px,1vw,13px); color: #1e293b; font-weight: 600; margin-bottom: 2px; flex: 0 0 auto; }
-    .pres-legend .leg-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
-    .pres-legend .leg-dot.filled { background: #334155; }
-    .pres-legend .leg-dot.hollow { border: 2px solid #334155; background: transparent; }
+    /* ── Legend pills (shown in top strips) ── */
+    .dual-legend-pill {
+      padding: 5px 18px; border-radius: 999px;
+      font-size: clamp(12px,1.15vw,16px); font-weight: 800; border: 2px solid;
+    }
+    .dual-legend-pill.period-pill { background: #dbeafe; border-color: #1d4ed8; color: #1e3a8a; }
+    .dual-legend-pill.ytd-pill    { background: #ede9fe; border-color: #7c3aed; color: #4c1d95; }
 
+    /* ══════════════════════════════════════════════════════════
+       DASHBOARD TOP STRIP — staff chips LEFT, legend pills RIGHT
+       ══════════════════════════════════════════════════════════ */
+    .dash-top-strip {
+      display: flex; gap: clamp(12px,1.8vw,24px); align-items: flex-start;
+      flex: 0 0 auto; margin-bottom: clamp(8px,1.2vh,16px);
+      padding: clamp(10px,1.4vh,16px) clamp(12px,1.5vw,20px);
+      background: #ffffff; border: 2px solid #e2e8f0; border-radius: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .dash-top-left  { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+    .dash-top-right { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+    .dash-staff-label, .dash-legend-label {
+      font-size: clamp(11px,1.05vw,14px); font-weight: 800;
+      color: #475569; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .dash-legend-label { text-align: right; }
+    #dashLegendPills { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+    /* ── Staff strip ── */
+    .pres-staffstrip {
+      flex: 0 0 auto; display: flex; flex-wrap: wrap;
+      gap: clamp(6px,.8vw,10px); align-content: flex-start;
+      max-height: clamp(80px,13vh,120px); overflow-y: auto;
+    }
+    .pres-staff-chip {
+      display: flex; align-items: center; gap: 7px;
+      background: #ffffff; border: 2px solid #cbd5e1; border-radius: 999px;
+      padding: 4px 14px 4px 4px; cursor: pointer;
+      transition: border-color .1s, box-shadow .1s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .pres-staff-chip:hover { border-color: #1e3a8a; box-shadow: 0 2px 8px rgba(30,58,138,.15); }
+    .pres-staff-chip .c-ring {
+      width: clamp(24px,2.2vw,32px); height: clamp(24px,2.2vw,32px); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(9px,.9vw,12px); font-weight: 800; color: #fff; flex: 0 0 auto;
+    }
+    .pres-staff-chip .c-name { font-size: clamp(12px,1.1vw,16px); font-weight: 800; white-space: nowrap; color: #0f172a; }
+    .pres-staff-chip .c-ytd-badge {
+      font-size: clamp(10px,.95vw,13px); font-weight: 800;
+      padding: 2px 8px; border-radius: 999px;
+      background: #ede9fe; border: 1px solid #a78bfa; color: #4c1d95; white-space: nowrap;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       PRODUCT CARDS — dual column (period LEFT, YTD RIGHT)
+       ══════════════════════════════════════════════════════════ */
+    .pres-products { flex: 0 0 auto; display: flex; flex-direction: column; gap: clamp(6px,1vh,12px); }
     .pres-prod-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(clamp(210px,24vw,320px),1fr));
-      grid-auto-rows: min-content;
-      align-content: start;
-      gap: clamp(8px,1.2vw,16px);
+      grid-template-columns: repeat(auto-fit, minmax(clamp(290px,33vw,500px),1fr));
+      grid-auto-rows: min-content; align-content: start;
+      gap: clamp(10px,1.4vw,20px);
     }
     .pres-prod-card {
-      background: #ffffff; border: 1px solid #b4c9ee; box-shadow: 0 1px 3px rgba(30,58,138,.10); color: #0f172a; border-radius: 14px;
-      padding: clamp(10px,1.5vh,18px) clamp(12px,1.5vw,20px);
-      display: flex; flex-direction: column; gap: clamp(4px,.8vh,9px);
+      background: #ffffff; border: 2px solid #cbd5e1; border-radius: 16px;
+      padding: clamp(12px,1.6vh,22px) clamp(14px,1.6vw,24px);
+      display: flex; flex-direction: column; gap: clamp(8px,1.1vh,14px);
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
     }
-    .pp-head { display: flex; align-items: center; gap: 7px; }
-    .pp-dot { width: clamp(9px,1vw,13px); height: clamp(9px,1vw,13px); border-radius: 50%; flex: 0 0 auto; }
-    .pp-label { font-size: clamp(12px,1.15vw,16px); font-weight: 800; flex: 1; }
-    .pp-pct-badge { font-size: clamp(10px,1vw,13px); font-weight: 800; padding: 2px 9px; border-radius: 999px; background: #eef3fd; border: 1px solid #c3d3ee; }
-    .pp-track { height: clamp(7px,1vh,11px); background: #dde6f5; border-radius: 999px; overflow: hidden; }
-    .pp-fill { height: 100%; border-radius: 999px; }
-    .pp-figs { display: flex; gap: 10px; }
-    .pp-fig { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: clamp(10px,.95vw,13px); color: #1e293b; font-weight: 600; }
-    .pp-fig-line { display: flex; align-items: center; gap: 6px; }
-    .pp-fig b { color: #0f172a; font-weight: 800; font-size: clamp(14px,1.5vw,20px); overflow-wrap: break-word; }
-    .pp-fig-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; display: inline-block; }
-    .pp-fig-dot.hollow { background: transparent; border: 2px solid; }
-    .pp-gap { display: flex; align-items: baseline; gap: 7px; font-size: clamp(10px,.95vw,13px); font-weight: 700; padding-top: 2px; border-top: 1px dashed #9db8e6; }
-    .pp-gap b { margin-left: auto; font-size: clamp(14px,1.5vw,20px); font-weight: 800; }
-    .pp-gap.short { color: #991b1b; }
-    .pp-gap.excess { color: #166534; }
-    .pp-extra { font-size: clamp(10px,.95vw,13px); color: #0f172a; background: #eaf1ff; border: 1px solid #c3d3ee; border-radius: 8px; padding: 4px 9px; }
-    .pp-extra.pp-due { color: #0f172a; background: #fef3c7; border-color: #f2d27a; }
-    .pp-extra b { color: #0f172a; font-size: clamp(12px,1.1vw,15px); }
-    .pp-extra-n { color: #334155; }
+    .pp-head { display: flex; align-items: center; gap: 8px; }
+    .pp-dot  { width: clamp(11px,1.2vw,16px); height: clamp(11px,1.2vw,16px); border-radius: 50%; flex: 0 0 auto; }
+    .pp-label { font-size: clamp(15px,1.6vw,22px); font-weight: 800; flex: 1; color: #0f172a; }
 
-    /* ── Compact staff strip — deliberately small; the point is quick access
-       to a name, not a data display (that's the point of the tap-through). ── */
-    .pres-staffstrip { flex: 0 0 auto; max-height: clamp(64px,11vh,96px); overflow-y: auto; display: flex; flex-wrap: wrap; gap: clamp(5px,.7vw,8px); align-content: flex-start; }
-    .pres-staff-chip {
+    /* Two columns inside each card */
+    .dual-cols { display: flex; gap: 0; border: 2px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+    .dual-col  { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: clamp(6px,.9vh,10px); padding: clamp(10px,1.4vh,16px) clamp(10px,1.3vw,16px); }
+
+    /* Period col — light blue */
+    .dual-col:first-child { background: #eff6ff; }
+    /* YTD col — strong purple zone */
+    .dual-col:last-child  { background: #e9d5ff; border-left: 5px solid #7c3aed; }
+    .dual-col:last-child .dual-col-badge { background: #c4b5fd !important; border-color: #7c3aed !important; }
+    .dual-col:last-child .dual-col-label { color: #3b0764 !important; }
+    .dual-col:last-child .dual-fig-lbl   { color: #4c1d95; }
+    .dual-col:last-child .dual-fig-val   { color: #1e0538; }
+    .dual-col:last-child .dual-fig-val.muted { color: #6d28d9; }
+    .dual-col:last-child .pp-track       { background: #c4b5fd; }
+
+    /* Column header badge */
+    .dual-col-badge {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      padding: 4px 10px; border-radius: 8px; border: 2px solid transparent;
+    }
+    .dual-col-label { font-size: clamp(10px,1vw,14px); font-weight: 800; color: #1d4ed8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dual-col-label.ytd-lbl { color: #6d28d9; }
+
+    /* Progress bar */
+    .pp-track { height: clamp(8px,1.1vh,14px); background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .pp-fill  { height: 100%; border-radius: 999px; }
+
+    /* Figures — stacked rows, label left / value right, NEVER clipped */
+    .dual-fig-row { display: flex; flex-direction: column; gap: clamp(6px,.9vh,10px); }
+    .dual-fig {
+      display: flex; flex-direction: row; align-items: baseline;
+      justify-content: space-between; gap: 8px; min-width: 0;
+    }
+    .dual-fig-lbl { font-size: clamp(10px,1vw,13px); color: #475569; font-weight: 700; white-space: nowrap; flex: 0 0 auto; }
+    .dual-fig-val { font-size: clamp(14px,1.5vw,21px); font-weight: 800; color: #0f172a; white-space: nowrap; text-align: right; flex: 1 1 auto; min-width: 0; }
+    .dual-fig-val.muted { color: #475569; }
+
+    /* % badge */
+    .pp-pct-badge { font-size: clamp(11px,1.1vw,15px); font-weight: 800; padding: 3px 10px; border-radius: 999px; flex: 0 0 auto; }
+    .pct-green { background: #dcfce7; color: #166534; }
+    .pct-amber { background: #fef9c3; color: #854d0e; }
+    .pct-red   { background: #fee2e2; color: #991b1b; }
+
+    /* Short/Excess — fully shaded row, same colour both sides */
+    .pp-gap {
       display: flex; align-items: center; gap: 6px;
-      background: #ffffff; border: 1px solid #9db8e6; color: #0f172a;
-      border-radius: 999px; padding: 3px 12px 3px 3px; cursor: pointer;
+      font-size: clamp(11px,1.1vw,15px); font-weight: 800;
+      padding: clamp(5px,.7vh,8px) clamp(8px,1vw,12px);
+      border-radius: 8px; margin-top: 4px;
     }
-    .pres-staff-chip:hover { background: #e3eeff; border-color: #2d5fd0; }
-    .pres-staff-chip .c-ring {
-      width: clamp(20px,1.9vw,26px); height: clamp(20px,1.9vw,26px); border-radius: 50%;
+    .pp-gap b { margin-left: auto; font-size: clamp(13px,1.4vw,19px); font-weight: 800; }
+    .pp-gap.short  { background: #fee2e2; color: #991b1b; border: 1.5px solid #fca5a5; }
+    .pp-gap.excess { background: #dcfce7; color: #166534; border: 1.5px solid #86efac; }
+
+    /* Outstanding / Due */
+    .pp-extra     { font-size: clamp(11px,1.05vw,14px); font-weight: 700; color: #1e40af; background: #eff6ff; border-radius: 8px; padding: 5px 11px; border: 1px solid #bfdbfe; }
+    .pp-extra.pp-due { color: #92400e; background: #fffbeb; border-color: #fde68a; }
+    .pp-extra b   { color: #0f172a; font-size: clamp(13px,1.2vw,17px); }
+    .pp-extra-n   { color: #475569; }
+
+    /* ══════════════════════════════════════════════════════════
+       SCREEN 4 — STAFF TOP CARD
+       ══════════════════════════════════════════════════════════ */
+    .staff-top-card {
+      flex: 0 0 auto; background: #ffffff; border: 2px solid #e2e8f0; border-radius: 14px;
+      padding: clamp(10px,1.4vh,18px) clamp(12px,1.5vw,22px);
+      margin-bottom: clamp(10px,1.4vh,16px);
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      display: flex; flex-direction: column; gap: clamp(10px,1.2vh,14px);
+    }
+    .staff-top-row { display: flex; align-items: center; gap: clamp(10px,1.4vw,20px); flex-wrap: wrap; }
+    .staff-top-info { flex: 1 1 auto; min-width: 0; }
+    .staff-legend-pills { display: flex; gap: 8px; flex-wrap: wrap; flex: 0 0 auto; }
+    .pres-avatar {
+      width: clamp(48px,6vw,78px); height: clamp(48px,6vw,78px); border-radius: 50%; background: #1e3a8a;
       display: flex; align-items: center; justify-content: center;
-      font-size: clamp(8.5px,.8vw,11px); font-weight: 800; color: #0f172a; flex: 0 0 auto;
+      font-weight: 800; font-size: clamp(16px,2vw,30px); color: #fff; flex: 0 0 auto;
+      box-shadow: 0 2px 8px rgba(30,58,138,.25);
     }
-    .pres-staff-chip .c-name { font-size: clamp(10.5px,1vw,13px); font-weight: 700; white-space: nowrap; }
+    .staff-switch-row { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 7px; padding-bottom: 3px; }
+    .staff-switch-row::-webkit-scrollbar { height: 3px; }
+    .staff-switch-row::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
 
-    /* ── Staff detail screen ── */
-    .pres-staffhead { display: flex; align-items: center; gap: clamp(10px,1.6vw,22px); margin-bottom: clamp(10px,1.8vh,20px); flex: 0 0 auto; flex-wrap: wrap; }
-    .pres-avatar { width: clamp(48px,6vw,84px); height: clamp(48px,6vw,84px); border-radius: 50%; background: #a9c8ff; border: 2px solid #2d5fd0; color: #0f172a; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: clamp(16px,2vw,30px); flex: 0 0 auto; }
-
-    /* ── Staff switcher — sticks to the bottom of the viewport while
-       scrolling the product cards above, so another staff member is one
-       tap away without leaving the screen. Deliberately tiny (name only,
-       no data) so it never competes with the cards for attention. ── */
-    .pres-staffswitch {
-      position: sticky; bottom: 0; z-index: 5;
-      margin: clamp(12px,2vh,20px) calc(-1 * clamp(16px,3vw,48px)) calc(-1 * clamp(14px,2.4vh,34px));
-      padding: clamp(8px,1.2vh,12px) clamp(16px,3vw,48px) clamp(10px,1.6vh,16px);
-      background: linear-gradient(180deg, rgba(219,232,251,0) 0%, #dbe8fb 28%, #dbe8fb 100%);
-      display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px;
-    }
     .pres-staffswitch-chip {
-      flex: 0 0 auto;
-      padding: 4px 11px;
-      border-radius: 999px;
-      background: #ffffff; border: 1px solid #9db8e6;
-      font-size: clamp(9.5px,.85vw,11.5px); font-weight: 700;
-      color: #0f172a; white-space: nowrap; cursor: pointer;
+      flex: 0 0 auto; padding: clamp(6px,.8vh,10px) clamp(12px,1.3vw,18px); border-radius: 999px;
+      background: #f1f5f9; border: 2px solid #cbd5e1;
+      font-size: clamp(11px,1.05vw,15px); font-weight: 800;
+      color: #334155; white-space: nowrap; cursor: pointer;
+      transition: border-color .1s, color .1s, background .1s;
     }
-    .pres-staffswitch-chip:hover { background: #e3eeff; border-color: #2d5fd0; }
-    .pres-staffswitch-chip.on { background: #a9c8ff; border-color: #2d5fd0; color: #0f172a; }
-    /* Staff product cards reuse the exact same .pres-prod-card / pp-* styles
-       as the branch dashboard (see above) — same markup, same look. */
+    .pres-staffswitch-chip:hover { border-color: #1e3a8a; color: #1e3a8a; background: #dbeafe; }
+    .pres-staffswitch-chip.on    { background: #1e3a8a; border-color: #1e3a8a; color: #ffffff; }
 
-    .pres-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #1e293b; font-size: clamp(13px,1.4vw,18px); }
-    .pres-fullscreen-hint { position: fixed; bottom: 10px; right: 14px; font-size: 11px; color: #334155; }
+    .pres-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #475569; font-size: clamp(14px,1.5vw,20px); font-weight: 700; }
 
     @media (max-width: 640px) {
       .pres-topbar { flex-wrap: wrap; }
-      .pres-crumb { order: 3; flex-basis: 100%; }
+      .pres-crumb  { order: 3; flex-basis: 100%; }
+      .dual-cols   { flex-direction: column; }
+      .dual-col:last-child { border-left: none; border-top: 5px solid #7c3aed; }
+      .dash-top-strip { flex-direction: column; }
     }
   </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════════
-     HIDDEN DATA SHELL — exact markup script.js expects (same
-     IDs as index.html). Never shown. script.js is loaded here
-     UNMODIFIED purely as the data-loading layer; its own legacy
-     rendering into this shell is harmless because it's hidden.
-     ══════════════════════════════════════════════════════════ -->
+<!-- HIDDEN DATA SHELL — script.js targets these IDs -->
 <div style="display:none" aria-hidden="true">
-
   <div class="topbar">
     <h1>Branch Review Dashboard</h1>
     <button class="tb-hamburger" id="tbHamburger" onclick="toggleTopbarMenu()" aria-label="Menu">☰</button>
@@ -230,53 +298,36 @@
       <button class="tb-btn danger" onclick="doLogout()">Logout</button>
     </div>
   </div>
-
-  <div class="main" id="mainArea">
-    <div class="spinner" id="loader">⏳ Connecting to Google Sheets…</div>
-  </div>
-
+  <div class="main" id="mainArea"><div class="spinner" id="loader">⏳ Connecting to Google Sheets…</div></div>
   <div class="overlay" id="overlay" onclick="maybeClose(event)">
     <div class="modal" id="modal">
-      <div class="modal-head">
-        <h3 id="modalTitle">Details</h3>
-        <button class="mclose" onclick="closeModal()">×</button>
-      </div>
+      <div class="modal-head"><h3 id="modalTitle">Details</h3><button class="mclose" onclick="closeModal()">×</button></div>
       <div class="modal-body" id="modalBody"></div>
     </div>
   </div>
-
   <div class="overlay" id="profOverlay" onclick="maybeCloseProfile(event)">
     <div class="modal modal-full" id="profModal">
-      <div class="modal-head">
-        <h3 id="profModalTitle">Employee Profile</h3>
-        <button class="mclose" onclick="closeProfileModal()">×</button>
-      </div>
+      <div class="modal-head"><h3 id="profModalTitle">Employee Profile</h3><button class="mclose" onclick="closeProfileModal()">×</button></div>
       <div class="modal-body" id="profModalBody"></div>
     </div>
   </div>
-
   <div class="overlay" id="checklistOverlay" onclick="maybeCloseChecklist(event)">
     <div class="modal" id="checklistModal">
-      <div class="modal-head">
-        <h3 id="checklistModalTitle">📝 Review Checklist</h3>
-        <button class="mclose" onclick="closeReviewChecklist()">×</button>
-      </div>
+      <div class="modal-head"><h3 id="checklistModalTitle">📝 Review Checklist</h3><button class="mclose" onclick="closeReviewChecklist()">×</button></div>
       <div class="modal-body" id="checklistModalBody"></div>
     </div>
   </div>
-
 </div>
-<!-- ══════════════════ END HIDDEN DATA SHELL ══════════════════ -->
+<!-- END HIDDEN DATA SHELL -->
 
-
-<!-- ══════════════════ VISIBLE PRESENTATION UI ══════════════════ -->
+<!-- ═══════ VISIBLE PRESENTATION UI ═══════ -->
 <div id="presWrap">
   <div class="pres-topbar">
     <span class="pres-brand">📊 Branch Review — Presentation</span>
     <span class="pres-crumb" id="presCrumb">Loading…</span>
     <button class="pres-btn" id="presFsBtn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
     <button class="pres-btn" id="presBackBtn" style="display:none" onclick="presGoBack()">◂ Back</button>
-    <a class='pres-btn' href='/'>✕ Exit</a>
+    <a class="pres-btn" href="index.html">✕ Exit</a>
   </div>
 
   <div class="pres-body">
@@ -284,48 +335,59 @@
     <!-- Screen 1 — pick branch -->
     <div class="pres-screen on" id="scr-branch">
       <div class="pres-h1">Select Branch</div>
-      <div class="pres-sub">Tap a branch to review</div>
+      <div class="pres-sub">Tap a branch to begin the review</div>
       <div class="pres-grid" id="branchGrid"></div>
     </div>
 
     <!-- Screen 2 — pick month(s) -->
     <div class="pres-screen" id="scr-month">
       <div class="pres-h1" id="monthTitle">Select Month</div>
-      <div class="pres-sub">Tap one month, or use a quick range</div>
+      <div class="pres-sub">Tap one month or use a quick range — YTD is always shown alongside</div>
       <div class="pres-chiprow" id="monthChips"></div>
       <div class="pres-chiprow">
-        <span class="pres-chip quick" onclick="presQuickRange('ytd')">📈 Full Year (Apr–now)</span>
+        <span class="pres-chip quick" onclick="presQuickRange('ytd')">📈 Full Year (April – Now)</span>
         <span class="pres-chip quick" onclick="presQuickRange('current')">📅 Current Month</span>
       </div>
       <div style="margin-top:auto">
-        <button class="pres-btn accent" style="font-size:clamp(13px,1.4vw,18px);padding:14px 30px" onclick="presShowDashboard()">View Dashboard ▸</button>
+        <button class="pres-btn accent" style="font-size:clamp(15px,1.6vw,22px);padding:16px 36px;border-radius:12px" onclick="presShowDashboard()">View Dashboard ▸</button>
       </div>
     </div>
 
     <!-- Screen 3 — branch dashboard -->
     <div class="pres-screen" id="scr-dash">
       <div class="pres-h1" id="dashTitle">—</div>
-      <div class="pres-products-head" style="margin-bottom:6px">
-        <div class="pres-sub" style="margin-bottom:0">Product Performance</div>
-        <div class="pres-chiprow" id="branchModeToggle" style="margin-left:auto;margin-bottom:0"></div>
+      <!-- Staff + legend at TOP -->
+      <div class="dash-top-strip">
+        <div class="dash-top-left">
+          <div class="dash-staff-label">👥 Staff — tap for detail</div>
+          <div class="pres-staffstrip" id="dashStaffGrid"></div>
+        </div>
+        <div class="dash-top-right">
+          <div class="dash-legend-label">Period View</div>
+          <div id="dashLegendPills"></div>
+        </div>
       </div>
+      <!-- Product cards -->
+      <div class="pres-sub" style="margin:10px 0 4px;flex:0 0 auto">📊 Product Performance</div>
+      <div id="branchModeToggle" style="display:none"></div>
       <div class="pres-products" id="dashProducts"></div>
-      <div class="pres-sub" style="margin:8px 0 4px;flex:0 0 auto">Staff — tap for full detail</div>
-      <div class="pres-staffstrip" id="dashStaffGrid"></div>
     </div>
 
     <!-- Screen 4 — staff detail -->
     <div class="pres-screen" id="scr-staff">
-      <div class="pres-staffhead">
-        <div class="pres-avatar" id="staffAvatar">--</div>
-        <div>
-          <div class="pres-h1" id="staffName" style="margin-bottom:2px">—</div>
-          <div class="pres-sub" id="staffSub" style="margin-bottom:0">—</div>
+      <div class="staff-top-card">
+        <div class="staff-top-row">
+          <div class="pres-avatar" id="staffAvatar">--</div>
+          <div class="staff-top-info">
+            <div class="pres-h1" id="staffName" style="margin-bottom:2px">—</div>
+            <div class="pres-sub" id="staffSub" style="margin-bottom:0">—</div>
+          </div>
+          <div id="staffLegendPills" class="staff-legend-pills"></div>
+          <div id="staffModeToggle" style="display:none"></div>
         </div>
-        <div class="pres-chiprow" id="staffModeToggle" style="margin-left:auto;margin-bottom:0"></div>
+        <div class="staff-switch-row" id="staffSwitchStrip"></div>
       </div>
       <div class="pres-products" id="staffCards"></div>
-      <div class="pres-staffswitch" id="staffSwitchStrip"></div>
     </div>
 
   </div>
@@ -333,6 +395,5 @@
 
 <script src="script.js"></script>
 <script src="presentation.js"></script>
-
 </body>
 </html>
